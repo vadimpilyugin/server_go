@@ -1,8 +1,8 @@
 package main
 
 import (
-  "gopkg.in/ini.v1"
-  "printer"
+  "github.com/go-ini/ini"
+  "github.com/vadimpilyugin/debug_print_go"
 )
 
 type Internal struct {

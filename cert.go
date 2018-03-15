@@ -2,7 +2,7 @@ package main
 
 import (
   "crypto/tls"
-  "printer"
+  "github.com/vadimpilyugin/debug_print_go"
 )
 
 func loadCert() tls.Certificate {
@@ -14,16 +14,8 @@ func loadCert() tls.Certificate {
 
     */
     []byte(`-----BEGIN CERTIFICATE-----
-
 -----END CERTIFICATE-----`),
-    /*
-
-    Private key
-    
-
-    */
     []byte(`-----BEGIN PRIVATE KEY-----
-
 -----END PRIVATE KEY-----`))
   if err != nil {
     printer.Fatal(err)

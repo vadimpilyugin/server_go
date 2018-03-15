@@ -2,7 +2,7 @@ package main
 
 import (
   "net/http"
-  "printer"
+  "github.com/vadimpilyugin/debug_print_go"
   "math/rand"
   "time"
   "crypto/sha256"

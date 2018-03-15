@@ -3,7 +3,7 @@ package main
 import (
     "crypto/tls"
     "net/http"
-    "printer"
+    "github.com/vadimpilyugin/debug_print_go"
 )
 
 func redirect(w http.ResponseWriter, req *http.Request) {

@@ -8,7 +8,7 @@ import (
   "fmt"
   "text/template"
   "strings"
-  "strftime"
+  "github.com/jehiah/go-strftime"
   "time"
   "net/http"
 )
