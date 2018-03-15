@@ -10,6 +10,7 @@ import (
   "bytes"
   "fmt"
   "sync"
+  "io"
 )
 
 var serverStartTime time.Time = time.Now()
@@ -27,8 +28,10 @@ var resources = map[string]string{
   "myscript_js":            `jQuery(document).ready(function($) {$(".clickable-row").click(function() {window.location = $(this).data("href");});});`,  
 }
 
+const fileField = "file"
+
 // name is '/'-separated, not filepath.Separator.
-func serveFile(w http.ResponseWriter, r *http.Request, fs http.FileSystem, name string) {
+func serveFile(w http.ResponseWriter, r *http.Request, fs http.Dir, name string) {
 
   cached_css := []string {
     "bootstrap_min_css",
@@ -104,6 +107,43 @@ func serveFile(w http.ResponseWriter, r *http.Request, fs http.FileSystem, name 
   }
 
   if d.IsDir() {
+    if r.Method == "POST" {
+      err := r.ParseMultipartForm(10*mb)
+      if err != nil {
+        printer.Fatal(err)
+      }
+      for v := range r.MultipartForm.File[fileField] {
+        fileHeader := r.MultipartForm.File[fileField][v]
+        fn := fileHeader.Filename
+        path := path.Clean(string(fs)+name+fn)
+
+        file,err := os.Open(path)
+        exists := err == nil
+        printer.Debug(err)
+        s := fmt.Sprintf(
+          "--- File name: %s\n--- File path: %s\n--- File size: %s\n--- Exists? %v\n",
+          fn, path,
+          hrSize(fileHeader.Size),
+          exists,
+        )
+        printer.Debug(s,"")
+        if exists {
+          file.Close()
+          path = path+"(1)"
+        }
+
+        copyTo,err := os.Create(path)
+        if err != nil {
+          printer.Fatal(err)
+        }
+        copyFrom,err := fileHeader.Open()
+        if err != nil {
+          printer.Fatal(err)
+        }
+        io.Copy(copyTo, copyFrom)
+      }
+    }
+
     buf := new(bytes.Buffer)
     err := dirList(buf,f,name)
     if err != nil {
@@ -126,7 +166,11 @@ func localRedirect(w http.ResponseWriter, r *http.Request, newPath string) {
     newPath += "?" + q
   }
   w.Header().Set("Location", newPath)
-  w.WriteHeader(http.StatusMovedPermanently)
+  if r.Method == "POST" {
+    w.WriteHeader(http.StatusTemporaryRedirect)
+  } else {
+    w.WriteHeader(http.StatusMovedPermanently)
+  }
 }
 
 
@@ -195,7 +239,7 @@ func dumpRequest(req *http.Request) {
 }
 
 type FileHandler struct {
-  root http.FileSystem
+  Root http.Dir
 }
 
 func (f *FileHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -211,5 +255,5 @@ func (f *FileHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
     r.URL.Path = upath
   }
 
-  serveFile(w, r, f.root, path.Clean(upath))
+  serveFile(w, r, f.Root, path.Clean(upath))
 }

@@ -37,7 +37,7 @@ func main() {
 
     printer.Debug("","----------------------")
 
-    fileHandler := &FileHandler{http.Dir(config.Internal.RootDir)}
+    fileHandler := &FileHandler{Root:http.Dir(config.Internal.RootDir)}
 
     srv := &http.Server{
       Addr: config.Network.ServerIp+":"+config.Network.ServerPort,

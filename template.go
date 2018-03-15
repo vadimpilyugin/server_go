@@ -257,6 +257,14 @@ const mainTemplate = `
                         {{end}}
                     </tbody>
                 </table>
+                <div class="upload">
+                  <h3> Добавить </h3>
+                  <form name="new_file" enctype="multipart/form-data" method="POST" action="/">
+                    <input name="file" type="file" multiple></input>
+                    <br>
+                    <input type="submit" value="Закачать">
+                  </form>
+                </div>
                 <address style='font-style:italic'>{{.Address}}</address>
             </div>
             <div class='col-md-1'></div>
