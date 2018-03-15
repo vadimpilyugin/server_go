@@ -22,6 +22,7 @@ type Directory struct {
 type Elem struct {
   Name string
   Url string
+  IsDir bool
   ModifDate int64
   Size int64
   ItemRank int
@@ -62,6 +63,7 @@ func toDirectory(dirs []os.FileInfo, name string) Directory {
     d.Elements = append(d.Elements, Elem{
       Name: upName,
       Url: backUrl,
+      IsDir: true,
       ModifDate: zeroDate,
       Size: folderSize,
       ItemRank: parentRank,
@@ -76,6 +78,7 @@ func toDirectory(dirs []os.FileInfo, name string) Directory {
       elem = Elem{
         Name: htmlReplacer.Replace(x.Name()),
         Url: urlEscape(x.Name())+"/",
+        IsDir: true,
         ModifDate: x.ModTime().Unix(),
         Size: folderSize,
         ItemRank: folderRank,
@@ -87,6 +90,7 @@ func toDirectory(dirs []os.FileInfo, name string) Directory {
       elem = Elem{
         Name: htmlReplacer.Replace(x.Name()),
         Url: urlEscape(x.Name()),
+        IsDir: false,
         ModifDate: x.ModTime().Unix(),
         Size: x.Size(),
         ItemRank: fileRank,
@@ -166,7 +170,7 @@ func dirList(w io.Writer, f http.File, name string) error {
   }
   b := dirs[:0]
   for _, x := range dirs {
-    if !strings.HasPrefix(x.Name(), ".") {
+    if !strings.HasPrefix(x.Name(), ".") || !x.IsDir() {
       b = append(b, x)
     }
   }
@@ -240,6 +244,7 @@ const mainTemplate = `
                             <th class='col-xs-1'>Имя</th>
                             <th class='col-xs-1'>Изменено</th>
                             <th class='col-xs-1'>Размер</th>
+                            <th class='col-xs-1'></th>
                         </tr>
                     </thead>
                     <tbody>
@@ -252,14 +257,20 @@ const mainTemplate = `
                                 <a href='{{.Url}}'>{{.Name}}</a> 
                             </td>
                             <td class='col-xs-2' data-value='{{.ModifDate}}'>{{.HrModifDate}}</td>
-                            <td class='col-xs-2' data-value='{{.Size}}'>{{.HrSize}}</td>
+                            <td class='col-xs-1' data-value='{{.Size}}'>{{.HrSize}}</td>
+                            
+                            <td class='col-xs-1'>
+                              {{if not .IsDir}}
+                              <a href="#" style="color:red" data-fn="{{.Url}}" class="delete-href">Удалить</a>
+                              {{end}}
+                            </td>
                         </tr>
                         {{end}}
                     </tbody>
                 </table>
                 <div class="upload">
                   <h3> Добавить </h3>
-                  <form name="new_file" enctype="multipart/form-data" method="POST" action="/">
+                  <form name="new_file" enctype="multipart/form-data" method="POST" action="./">
                     <input name="file" type="file" multiple></input>
                     <br>
                     <input type="submit" value="Закачать">
