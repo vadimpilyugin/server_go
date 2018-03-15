@@ -254,14 +254,14 @@ const mainTemplate = `
                                 <div class='{{.ItemPic}}'></div>
                             </td>
                             <td class='col-xs-6' data-value='{{.Name}}'>
-                                <a href='{{.Url}}'>{{.Name}}</a> 
+                                <a href='{{.Url}}' class="elem-href">{{.Name}}</a> 
                             </td>
                             <td class='col-xs-2' data-value='{{.ModifDate}}'>{{.HrModifDate}}</td>
                             <td class='col-xs-1' data-value='{{.Size}}'>{{.HrSize}}</td>
                             
                             <td class='col-xs-1'>
                               {{if not .IsDir}}
-                              <a href="#" style="color:red" data-fn="{{.Url}}" class="delete-href">Удалить</a>
+                              <a href="#" style="color:red" data-fn="{{.Url}}" class="delete-href" data-count="0">Удалить</a>
                               {{end}}
                             </td>
                         </tr>

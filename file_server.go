@@ -34,20 +34,35 @@ var resources = map[string]string{
             window.location = $(this).data("href");
           }
         );
+        $(".elem-href").click(
+          function(event) {
+            console.log("Prevented default for following the link")
+            event.preventDefault();
+          }
+        );
         $(".delete-href").click(
           function(event) {
             event.preventDefault();
             event.stopPropagation();
             console.log(window.location, "--->", $(this).data("fn"));
             console.log("Event: ",event);
-            $.ajax({
-              url: window.location+$(this).data("fn"),
-              type: 'DELETE',
-              success: function(result) {
-                console.log("Successfull DELETE request, redirecting to ---> ", window.location)
-                window.location = window.location
-              }
-            });
+            console.log("Count: ", $(this).data("count"));
+            if($(this).data("count") === 0) {
+              console.log("Warning!");
+              $(this).data("count",1)
+              $(this).fadeOut(200, function() {
+                  $(this).text("Точно?").fadeIn(200);
+              });
+            } else {
+              $.ajax({
+                url: window.location+$(this).data("fn"),
+                type: 'DELETE',
+                success: function(result) {
+                  console.log("Successfull DELETE request, redirecting to ---> ", window.location)
+                  window.location = window.location
+                }
+              });
+            }
           }
         )
       }
