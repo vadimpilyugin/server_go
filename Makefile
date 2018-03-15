@@ -6,8 +6,8 @@ GOGET=$(GOCMD) get
 BINARY_NAME=server
 BINARY_UNIX=$(BINARY_NAME)_unix
 
-all: build
-build: 
+all: $(BINARY_NAME)
+$(BINARY_NAME): *.go
 	$(GOBUILD) -o $(BINARY_NAME) -v
 clean: 
 	$(GOCLEAN)
