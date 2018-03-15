@@ -77,31 +77,36 @@ func trySetCookie(w http.ResponseWriter, r *http.Request) {
   }
 }
 
+func isCorrect(cookie string) bool {
+  cookieMutex.Lock()
+  cookieCh <- messageCheck
+  cookieCh <- cookie
+  exists := <-cookieCh
+  cookieMutex.Unlock()
+  return exists == cookieExists
+}
+
 var ErrAlreadyHasCookie = errors.New("Client already has cookies!")
 
-func checkCookie(w http.ResponseWriter, r *http.Request) error {
-  if cookie, err := r.Cookie(cookieName); err != nil {
+func checkCookie(w http.ResponseWriter, r *http.Request) (string,error) {
+  if len(r.Form[cookieName]) > 0 && isCorrect(r.Form[cookieName][0]) {
+    printer.Note("Direct link detected!")
+    return r.Form[cookieName][0], nil
+  } else if cookie, err := r.Cookie(cookieName); err != nil {
     // redirect to auth
     trySetCookie(w,r)
-    return http.ErrNoCookie
+    return "", http.ErrNoCookie
   } else {
-    // check correctness
-    cookieMutex.Lock()
-    cookieCh <- messageCheck
-    cookieCh <- cookie.Value
-    exists := <-cookieCh
-    cookieMutex.Unlock()
-
-    if exists == "false" {
+    if !isCorrect(cookie.Value) {
       // redirect to auth
       trySetCookie(w,r)
-      return http.ErrNoCookie
+      return "", http.ErrNoCookie
     }
     if r.RequestURI == authPage{
       printer.Note("Already has valid cookies, but sent another request!")
       http.Redirect(w,r,"/",http.StatusFound)
-      return ErrAlreadyHasCookie
+      return cookie.Value,ErrAlreadyHasCookie
     }
-    return nil
+    return cookie.Value, nil
   }
 }

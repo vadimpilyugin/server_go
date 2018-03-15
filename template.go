@@ -49,7 +49,7 @@ const (
   fileRank = 2
 )
 
-func toDirectory(dirs []os.FileInfo, name string) Directory {
+func toDirectory(dirs []os.FileInfo, name string, cookie string) Directory {
   d := Directory{
     Name: name, 
     Address: fmt.Sprintf(
@@ -87,9 +87,13 @@ func toDirectory(dirs []os.FileInfo, name string) Directory {
         HrSize: noInfo,
       }
     } else {
+      elem_url := urlEscape(x.Name())
+      if config.Auth.UseAuth {
+        elem_url += fmt.Sprintf("?%s=%s",cookieName, cookie)
+      }
       elem = Elem{
         Name: htmlReplacer.Replace(x.Name()),
-        Url: urlEscape(x.Name()),
+        Url: elem_url,
         IsDir: false,
         ModifDate: x.ModTime().Unix(),
         Size: x.Size(),
@@ -163,7 +167,7 @@ func greater (b1, b2 bool) bool {
   }
 }
 
-func dirList(w io.Writer, f http.File, name string) error {
+func dirList(w io.Writer, f http.File, name string, cookie string) error {
   dirs, err := f.Readdir(-1)
   if err != nil {
     return err
@@ -185,7 +189,7 @@ func dirList(w io.Writer, f http.File, name string) error {
 
   t := template.New("mainTemplate")
   t, err = t.Parse(mainTemplate)
-  p := toDirectory(dirs,name)
+  p := toDirectory(dirs,name,cookie)
   err = t.Execute(w, p)
   if err != nil {
     return err
@@ -254,7 +258,7 @@ const mainTemplate = `
                                 <div class='{{.ItemPic}}'></div>
                             </td>
                             <td class='col-xs-6' data-value='{{.Name}}'>
-                                <a href='{{.Url}}' class="elem-href">{{.Name}}</a> 
+                                <a href='#' class="elem-href">{{.Name}}</a> 
                             </td>
                             <td class='col-xs-2' data-value='{{.ModifDate}}'>{{.HrModifDate}}</td>
                             <td class='col-xs-1' data-value='{{.Size}}'>{{.HrSize}}</td>

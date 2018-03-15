@@ -110,8 +110,10 @@ func serveFile(w http.ResponseWriter, r *http.Request, fs http.Dir, name string)
     }
   }
 
+  var cookie string
+  var err error
   if config.Auth.UseAuth {
-    err := checkCookie(w,r)
+    cookie,err = checkCookie(w,r)
     if err != nil {
       return
     }
@@ -192,7 +194,7 @@ func serveFile(w http.ResponseWriter, r *http.Request, fs http.Dir, name string)
     }
 
     buf := new(bytes.Buffer)
-    err := dirList(buf,f,name)
+    err := dirList(buf,f,name,cookie)
     if err != nil {
       printer.Error(err)
       http.Error(w, "Error reading directory", http.StatusInternalServerError)
