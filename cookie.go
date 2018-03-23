@@ -88,25 +88,55 @@ func isCorrect(cookie string) bool {
 
 var ErrAlreadyHasCookie = errors.New("Client already has cookies!")
 
-func checkCookie(w http.ResponseWriter, r *http.Request) (string,error) {
-  if len(r.Form[cookieName]) > 0 && isCorrect(r.Form[cookieName][0]) {
-    printer.Note("Direct link detected!")
-    return r.Form[cookieName][0], nil
-  } else if cookie, err := r.Cookie(cookieName); err != nil {
-    // redirect to auth
-    trySetCookie(w,r)
-    return "", http.ErrNoCookie
-  } else {
-    if !isCorrect(cookie.Value) {
-      // redirect to auth
-      trySetCookie(w,r)
-      return "", http.ErrNoCookie
+func checkCookieInHeaders(r *http.Request) string {
+  // cookie, err := 
+  for _,cookie := range r.Cookies() {
+    if cookie.Name == cookieName && isCorrect(cookie.Value) {
+      return cookie.Value
     }
-    if r.RequestURI == authPage{
-      printer.Note("Already has valid cookies, but sent another request!")
-      http.Redirect(w,r,"/",http.StatusFound)
-      return cookie.Value,ErrAlreadyHasCookie
-    }
-    return cookie.Value, nil
   }
+  return ""
+}
+
+func checkCookieInUrl(r *http.Request) (string, bool) {
+  if len(r.Form[cookieName]) == 0 {
+    return "", false
+  }
+  cookie := r.Form[cookieName][0]
+  if isCorrect(cookie) {
+    return cookie, true
+  }
+  return cookie, false
+}
+
+func checkCookie(w http.ResponseWriter, r *http.Request) (string,error) {
+
+  // check headers for cookies
+  headerCookie := checkCookieInHeaders(r)
+  urlCookie, isUrlCookieCorrect := checkCookieInUrl(r)
+
+  if isUrlCookieCorrect && headerCookie == "" {
+    // Logging
+    printer.Note("Renewing Cookie header", "Cookie-auth")
+    //
+    http.SetCookie(w,&http.Cookie{Name:cookieName, Value:urlCookie})
+    return urlCookie, nil
+  }
+  if headerCookie != "" {
+    // Logging
+    if isUrlCookieCorrect {
+      printer.Note("direct link access, but has valid Cookie header", "Cookie-auth")
+    } else if urlCookie == "" {
+      printer.Note("normal request", "Cookie-auth")
+    } else {
+      printer.Note("old direct link, but request is from authenticated Client!", "Cookie-auth")
+    }
+    //
+    return headerCookie, nil
+  }
+
+  // redirect to auth page
+
+  trySetCookie(w,r)
+  return "", http.ErrNoCookie
 }

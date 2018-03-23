@@ -46,7 +46,8 @@ func main() {
     if config.Openssl.UseSSL {
       srv.TLSConfig = loadTlsConfig()
       srv.TLSNextProto = make(map[string]func(*http.Server, *tls.Conn, http.Handler), 0)
+      printer.Fatal(srv.ListenAndServeTLS("",""))
+    } else {
+      printer.Fatal(srv.ListenAndServe())
     }
-
-    printer.Fatal(srv.ListenAndServeTLS("",""))
 }

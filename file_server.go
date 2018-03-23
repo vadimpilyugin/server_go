@@ -189,6 +189,10 @@ func serveFile(w http.ResponseWriter, r *http.Request, fs http.Dir, name string)
         }
         io.Copy(copyTo, copyFrom)
       }
+      err = r.MultipartForm.RemoveAll()
+      if err != nil {
+        printer.Error(err)
+      }
       localRedirect(w, r, "./")
       return
     }
@@ -201,7 +205,7 @@ func serveFile(w http.ResponseWriter, r *http.Request, fs http.Dir, name string)
       return
     }
     w.Header().Set("Content-Type", "text/html; charset=utf-8")
-    http.ServeContent(w, r, d.Name(), d.ModTime(), bytes.NewReader(buf.Bytes()))
+    http.ServeContent(w, r, d.Name(), serverStartTime, bytes.NewReader(buf.Bytes()))
   } else {
     if r.Method == "DELETE" {
       err := os.Remove(path.Clean(string(fs)+name))
