@@ -258,7 +258,7 @@ const mainTemplate = `
                                 <div class='{{.ItemPic}}'></div>
                             </td>
                             <td class='col-xs-6' data-value='{{.Name}}'>
-                                <a href='#' class="elem-href">{{.Name}}</a> 
+                                <a href='{{.Name}}' class="elem-href">{{.Name}}</a> 
                             </td>
                             <td class='col-xs-2' data-value='{{.ModifDate}}'>{{.HrModifDate}}</td>
                             <td class='col-xs-1' data-value='{{.Size}}'>{{.HrSize}}</td>

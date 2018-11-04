@@ -205,7 +205,7 @@ func serveFile(w http.ResponseWriter, r *http.Request, fs http.Dir, name string)
       return
     }
     w.Header().Set("Content-Type", "text/html; charset=utf-8")
-    http.ServeContent(w, r, d.Name(), serverStartTime, bytes.NewReader(buf.Bytes()))
+    http.ServeContent(w, r, d.Name(), d.ModTime(), bytes.NewReader(buf.Bytes()))
   } else {
     if r.Method == "DELETE" {
       err := os.Remove(path.Clean(string(fs)+name))
@@ -308,10 +308,6 @@ type FileHandler struct {
 
 func (f *FileHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
   dumpRequest(r)
-
-  if config.Openssl.UseSSL {
-    w.Header().Add("Strict-Transport-Security", "max-age=63072000; includeSubDomains")
-  }
 
   upath := r.URL.Path
   if !strings.HasPrefix(upath, "/") {
