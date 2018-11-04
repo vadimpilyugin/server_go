@@ -20,6 +20,8 @@ type Openssl struct {
   UseSSL bool     `ini:"use_ssl"`
   RedirectHTTP bool  `ini:"redirect_http"`
   PortToRedirect string `ini:"port_to_redirect"`
+  CertFile string `ini:"cert_file"`
+  KeyFile string `ini:"key_file"`
 }
 
 type Auth struct {

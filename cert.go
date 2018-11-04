@@ -6,17 +6,21 @@ import (
 )
 
 func loadCert() tls.Certificate {
-  cert,err := tls.X509KeyPair(
     /*
+  cert,err := tls.X509KeyPair(
 
     Certificate
     
 
-    */
     []byte(`-----BEGIN CERTIFICATE-----
 -----END CERTIFICATE-----`),
     []byte(`-----BEGIN PRIVATE KEY-----
 -----END PRIVATE KEY-----`))
+    */
+  cert,err := tls.LoadX509KeyPair(
+    config.Openssl.CertFile,
+    config.Openssl.KeyFile,
+  )
   if err != nil {
     printer.Fatal(err)
   }
