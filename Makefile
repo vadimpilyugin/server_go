@@ -19,7 +19,7 @@ run:
 deps:
 	$(GOGET) github.com/vadimpilyugin/debug_print_go
 	$(GOGET) github.com/jehiah/go-strftime
-	$(GOGET) go get github.com/go-ini/ini
+	$(GOGET) github.com/go-ini/ini
 
 
 # Cross compilation
