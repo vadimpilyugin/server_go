@@ -11,6 +11,9 @@ import (
   "github.com/jehiah/go-strftime"
   "time"
   "net/http"
+  "github.com/vadimpilyugin/debug_print_go"
+  "io/ioutil"
+  "path"
 )
 
 type Directory struct {
@@ -26,19 +29,17 @@ type Elem struct {
   ModifDate int64
   Size int64
   ItemRank int
-  ItemPic string
   HrModifDate string
   HrSize string
+  IsParent bool
+  Icon string
 }
 
 const (
   noInfo = "-"
-  upName = "Back"
+  upName = "Parent Directory"
   zeroSize = 0
   zeroDate = 0
-  backPic = "back"
-  folderPic = "folder"
-  filePic = "file"
   backUrl = "../"
   folderSize = 4096
 )
@@ -48,6 +49,17 @@ const (
   folderRank = 1
   fileRank = 2
 )
+
+func fnToIcon (s string) string {
+  ext := path.Ext(s)
+  icon, found := mapExtToIcon[ext]
+  if found {
+    return icon
+  }
+  return "unknown.svg"
+}
+
+var mapExtToIcon = map[string]string{".zip": "archive.svg", ".7z": "archive.svg", ".bz2": "archive.svg", ".cab": "archive.svg", ".gz": "archive.svg", ".tar": "archive.svg", ".rar": "archive.svg", ".aac": "audio.svg", ".aif": "audio.svg", ".aifc": "audio.svg", ".aiff": "audio.svg", ".ape": "audio.svg", ".au": "audio.svg", ".flac": "audio.svg", ".iff": "audio.svg", ".m4a": "audio.svg", ".mid": "audio.svg", ".mp3": "audio.svg", ".mpa": "audio.svg", ".ra": "audio.svg", ".wav": "audio.svg", ".wma": "audio.svg", ".f4a": "audio.svg", ".f4b": "audio.svg", ".oga": "audio.svg", ".ogg": "audio.svg", ".xm": "audio.svg", ".it": "audio.svg", ".s3m": "audio.svg", ".mod": "audio.svg", ".bin": "bin.svg", ".hex": "bin.svg", ".xml": "code.svg", ".doc": "doc.svg", ".docx": "doc.svg", ".docm": "doc.svg", ".dot": "doc.svg", ".dotx": "doc.svg", ".dotm": "doc.svg", ".log": "doc.svg", ".msg": "doc.svg", ".odt": "doc.svg", ".pages": "doc.svg", ".rtf": "doc.svg", ".tex": "doc.svg", ".wpd": "doc.svg", ".wps": "doc.svg", ".bmp": "img.svg", ".png": "img.svg", ".tiff": "img.svg", ".tif": "img.svg", ".gif": "img.svg", ".jpg": "img.svg", ".jpeg": "img.svg", ".jpe": "img.svg", ".psd": "img.svg", ".ai": "img.svg", ".ico": "img.svg", ".xlsx": "spreadsheet.svg", ".xlsm": "spreadsheet.svg", ".xltx": "spreadsheet.svg", ".xltm": "spreadsheet.svg", ".xlam": "spreadsheet.svg", ".xlr": "spreadsheet.svg", ".xls": "spreadsheet.svg", ".csv": "spreadsheet.svg", ".ppt": "presentation.svg", ".pptx": "presentation.svg", ".pot": "presentation.svg", ".potx": "presentation.svg", ".pptm": "presentation.svg", ".potm": "presentation.svg", ".xps": "presentation.svg", ".cpp": "c++.svg", ".c": "c.svg", ".css": "css3.svg", ".sass": "css3.svg", ".scss": "css3.svg", ".less": "css3.svg", ".ttf": "font.svg", ".TTF": "font.svg", ".woff": "font.svg", ".WOFF": "font.svg", ".woff2": "font.svg", ".WOFF2": "font.svg", ".otf": "font.svg", ".OTF": "font.svg", ".h": "h.svg", ".html": "html5.svg", ".xhtml": "html5.svg", ".shtml": "html5.svg", ".htm": "html5.svg", ".URL": "html5.svg", ".url": "html5.svg", ".nfo": "info.svg", ".info": "info.svg", ".iso": "iso.svg", ".img": "iso.svg", ".jar": "java.svg", ".java": "java.svg", ".js": "js.svg", ".json": "js.svg", ".md": "markdown.svg", ".pkg": "package.svg", ".dmg": "package.svg", ".rpm": "package.svg", ".deb": "package.svg", ".pdf": "pdf.svg", ".php": "php.svg", ".phtml": "php.svg", ".py": "py.svg", ".rb": "rb.svg", ".bat": "script.svg", ".BAT": "script.svg", ".cmd": "script.svg", ".sh": "script.svg", ".ps": "script.svg", ".exe": "script.svg", ".EXE": "script.svg", ".msi": "script.svg", ".MSI": "script.svg", ".sql": "sql.svg", ".txt": "text.svg", ".cnf": "text.svg", ".conf": "text.svg", ".map": "text.svg", ".yaml": "text.svg", ".svg": "vector.svg", ".svgz": "vector.svg", ".asf": "video.svg", ".asx": "video.svg", ".avi": "video.svg", ".flv": "video.svg", ".mkv": "video.svg", ".mov": "video.svg", ".mp4": "video.svg", ".mpg": "video.svg", ".rm": "video.svg", ".srt": "video.svg", ".swf": "video.svg", ".vob": "video.svg", ".wmv": "video.svg", ".m4v": "video.svg", ".f4v": "video.svg", ".f4p": "video.svg", ".ogv": "video.svg"}
 
 func toDirectory(dirs []os.FileInfo, name string, cookie string) Directory {
   d := Directory{
@@ -67,9 +79,10 @@ func toDirectory(dirs []os.FileInfo, name string, cookie string) Directory {
       ModifDate: zeroDate,
       Size: folderSize,
       ItemRank: parentRank,
-      ItemPic: backPic,
-      HrModifDate: noInfo,
+      HrModifDate: "",
       HrSize: noInfo,
+      IsParent: true,
+      Icon: "folder-home.svg",
     })
   }
   for _,x := range dirs {
@@ -82,9 +95,9 @@ func toDirectory(dirs []os.FileInfo, name string, cookie string) Directory {
         ModifDate: x.ModTime().Unix(),
         Size: folderSize,
         ItemRank: folderRank,
-        ItemPic: folderPic,
         HrModifDate: hrModifDate(x.ModTime()),
         HrSize: noInfo,
+        Icon: "folder.svg",
       }
     } else {
       elem_url := urlEscape(x.Name())
@@ -98,9 +111,9 @@ func toDirectory(dirs []os.FileInfo, name string, cookie string) Directory {
         ModifDate: x.ModTime().Unix(),
         Size: x.Size(),
         ItemRank: fileRank,
-        ItemPic: filePic,
         HrModifDate: hrModifDate(x.ModTime()),
         HrSize: hrSize(x.Size()),
+        Icon: fnToIcon(x.Name()),
       }
     }
 
@@ -187,8 +200,10 @@ func dirList(w io.Writer, f http.File, name string, cookie string) error {
     return greater(dirs[i].IsDir(),dirs[j].IsDir()) 
   })
 
-  t := template.New("mainTemplate")
-  t, err = t.Parse(mainTemplate)
+  t, err := template.ParseFiles(config.Static.DirlistTempl)
+  if err != nil {
+    printer.Fatal(err)
+  }
   p := toDirectory(dirs,name,cookie)
   err = t.Execute(w, p)
   if err != nil {
@@ -198,140 +213,9 @@ func dirList(w io.Writer, f http.File, name string, cookie string) error {
 }
 
 func generateAuthPage(w io.Writer) {
-  fmt.Fprintf(w, "%s", authPageTemplate)
+  data, err := ioutil.ReadFile(config.Static.AuthTempl)
+  if err != nil {
+    printer.Fatal(err)
+  }
+  fmt.Fprintf(w, "%s", data)
 }
-
-const mainTemplate = `
-<!DOCTYPE html5>
-<html>
-  <head>
-    <meta charset="utf-8">
-    <title> Index of {{.Name}} </title>
-        <!-- back_base64 -->
-    <link rel="stylesheet" type="text/css" href="/__back_base64__">
-        <!-- folder_base64 -->
-    <link rel="stylesheet" type="text/css" href="/__folder_base64__">
-        <!-- file_base64 -->
-    <link rel="stylesheet" type="text/css" href="/__file_base64__">
-        <!-- favicon_base64 -->
-    <link rel='shortcut icon' type='image/png' href='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAMAAABEpIrGAAAABGdBTUEAALGPC/xhBQAAAAFzUkdCAK7OHOkAAAAgY0hSTQAAeiYAAICEAAD6AAAAgOgAAHUwAADqYAAAOpgAABdwnLpRPAAAARdQTFRFAAAANJjbNJjbNJjbNJjbNJjbNJjbNJjbNJjbNJjbNJjbNJjbNJjbNJjbNJjbNJjbNJjbNJjbNJjbNJjbNJjbNJjbNJjbNJjbNJjbNJjbNJjbNJjbNJjbNJjbNJjbNJjbNJjbNJjbNJjbNJjbNJjbNJjbNJjbNJjbNJjbNJjbNJjbNJjbNJjbNJjbNJjbNJjbNJjbNJjbNJjbNJjbNJjbNJjbNJjbNJjbNJjbNJjbNJjbNJjbNJjbNJjbNJjbNJjbNJjbNJjbNJjbNJjbNJjbNJjbNJjbNJjbNJjbNJjbNJjbNJjbNJjbNJjbNJjbNJjbNJjbNJjbNJjbNJjbNJjbNJjbNJjbNJjbNJjbNJjbNJjbNJjb////1Lch+gAAAFt0Uk5TAAABDRcbGhQIAx9vrLm4mUwQJZDf+/PCZg963bcwAtLXWQv6/umTPC0uKQX52bCoqaSUYvzcccdG2nnhkuKW+P3gyfHYbrU5IobR9OtfEhlYnLuzhz8KHB0TBmd1o1EAAAABYktHRFzq2ACXAAAACXBIWXMAAABIAAAASABGyWs+AAAAyklEQVQ4y2NgoBgwMjGzsIIBGzsHIyOmAk4ubh5eMODjFxBkwlQhJCwiGg0BYuISkphmSElHw4GojKwchgJ5MYSCaAVFJSYkwAgyT1kFSYGqmrqGJhxosWgDVUQjAx1dPX0DODA0MmZhQlUQrWKCAkzN2NEUoANzCwIKLK0IKLC2IaDA1m5UAf0U2DvgU+AozODkjE+BiysDtwIeeWU3dwYPTy9vHNIqPry+fgyc/gGBvEFYQXBIqCQTMG+GsYRHYAWskVHYMisaAAAtwAfZwspY/gAAACV0RVh0ZGF0ZTpjcmVhdGUAMjAxOC0wMy0xNFQxNDowNjo0NCswMDowMBNWqewAAAAldEVYdGRhdGU6bW9kaWZ5ADIwMTgtMDMtMTRUMTQ6MDY6NDQrMDA6MDBiCxFQAAAARnRFWHRzb2Z0d2FyZQBJbWFnZU1hZ2ljayA2LjcuOC05IDIwMTQtMDUtMTIgUTE2IGh0dHA6Ly93d3cuaW1hZ2VtYWdpY2sub3Jn3IbtAAAAABh0RVh0VGh1bWI6OkRvY3VtZW50OjpQYWdlcwAxp/+7LwAAABh0RVh0VGh1bWI6OkltYWdlOjpoZWlnaHQAMTkyDwByhQAAABd0RVh0VGh1bWI6OkltYWdlOjpXaWR0aAAxOTLTrCEIAAAAGXRFWHRUaHVtYjo6TWltZXR5cGUAaW1hZ2UvcG5nP7JWTgAAABd0RVh0VGh1bWI6Ok1UaW1lADE1MjEwMzY0MDS9fwamAAAAD3RFWHRUaHVtYjo6U2l6ZQAwQkKUoj7sAAAAVnRFWHRUaHVtYjo6VVJJAGZpbGU6Ly8vbW50bG9nL2Zhdmljb25zLzIwMTgtMDMtMTQvNmIwY2U4ZDY3MjA1MDY0MmZmYTZmOTk1YTU3YzYyNzkuaWNvLnBuZzEJB6oAAAAASUVORK5CYII='/>
-        <!-- bootstrap_min_css -->
-    <link rel="stylesheet" type="text/css" href="/__bootstrap_min_css__">
-        <!-- bootstrap_sortable_css -->
-    <link rel="stylesheet" type="text/css" href="/__bootstrap_sortable_css__">
-        <!-- jquery_min_js -->
-    <script type="text/javascript" src="/__jquery_min_js__"></script>
-        <!-- bootstrap_min_js -->
-    <script type="text/javascript" src="/__bootstrap_min_js__"></script>
-        <!-- bootstrap_sortable_js -->
-    <script type="text/javascript" src="/__bootstrap_sortable_js__"></script>
-        <!-- moment_min_js -->
-    <script type="text/javascript" src="/__moment_min_js__"></script>
-        <!-- myscript_js -->
-    <script type="text/javascript" src="/__myscript_js__"></script>
-    <style>
-      ul {
-        list-style-type: none;
-      }
-    </style>
-  </head>
-  <body>
-    <div class='container'>
-        <div class='row'>
-            <div class='col-md-1'></div>
-            <div class='col-md-10'>
-                <h3> Index of {{.Name}} </h3>
-                <table class='table table-hover sortable'>
-                    <thead>
-                        <tr>
-                            <th class='col-xs-1'></th>
-                            <th class='col-xs-1'>Имя</th>
-                            <th class='col-xs-1'>Изменено</th>
-                            <th class='col-xs-1'>Размер</th>
-                            <th class='col-xs-1'></th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {{range .Elements}}
-                        <tr class='clickable-row' data-href='{{.Url}}'>
-                            <td class='col-xs-1' data-value='{{.ItemRank}}'>
-                                <div class='{{.ItemPic}}'></div>
-                            </td>
-                            <td class='col-xs-6' data-value='{{.Name}}'>
-                                <a href='{{.Name}}' class="elem-href">{{.Name}}</a> 
-                            </td>
-                            <td class='col-xs-2' data-value='{{.ModifDate}}'>{{.HrModifDate}}</td>
-                            <td class='col-xs-1' data-value='{{.Size}}'>{{.HrSize}}</td>
-                            
-                            <td class='col-xs-1'>
-                              {{if not .IsDir}}
-                              <a href="#" style="color:red" data-fn="{{.Url}}" class="delete-href" data-count="0">Удалить</a>
-                              {{end}}
-                            </td>
-                        </tr>
-                        {{end}}
-                    </tbody>
-                </table>
-                <div class="upload">
-                  <h3> Добавить </h3>
-                  <form name="new_file" enctype="multipart/form-data" method="POST" action="./">
-                    <input name="file" type="file" multiple></input>
-                    <br>
-                    <input type="submit" value="Закачать">
-                  </form>
-                </div>
-                <address style='font-style:italic'>{{.Address}}</address>
-            </div>
-            <div class='col-md-1'></div>
-        </div>
-    </div>
-  </body>
-</html>
-`
-
-const authPageTemplate = `<!DOCTYPE html5>
-<html>
-  <head>
-    <meta charset="utf-8">
-        <!-- favicon_base64 -->
-    <link rel='shortcut icon' type='image/png' href='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAMAAABEpIrGAAAABGdBTUEAALGPC/xhBQAAAAFzUkdCAK7OHOkAAAAgY0hSTQAAeiYAAICEAAD6AAAAgOgAAHUwAADqYAAAOpgAABdwnLpRPAAAARdQTFRFAAAANJjbNJjbNJjbNJjbNJjbNJjbNJjbNJjbNJjbNJjbNJjbNJjbNJjbNJjbNJjbNJjbNJjbNJjbNJjbNJjbNJjbNJjbNJjbNJjbNJjbNJjbNJjbNJjbNJjbNJjbNJjbNJjbNJjbNJjbNJjbNJjbNJjbNJjbNJjbNJjbNJjbNJjbNJjbNJjbNJjbNJjbNJjbNJjbNJjbNJjbNJjbNJjbNJjbNJjbNJjbNJjbNJjbNJjbNJjbNJjbNJjbNJjbNJjbNJjbNJjbNJjbNJjbNJjbNJjbNJjbNJjbNJjbNJjbNJjbNJjbNJjbNJjbNJjbNJjbNJjbNJjbNJjbNJjbNJjbNJjbNJjbNJjbNJjbNJjbNJjbNJjb////1Lch+gAAAFt0Uk5TAAABDRcbGhQIAx9vrLm4mUwQJZDf+/PCZg963bcwAtLXWQv6/umTPC0uKQX52bCoqaSUYvzcccdG2nnhkuKW+P3gyfHYbrU5IobR9OtfEhlYnLuzhz8KHB0TBmd1o1EAAAABYktHRFzq2ACXAAAACXBIWXMAAABIAAAASABGyWs+AAAAyklEQVQ4y2NgoBgwMjGzsIIBGzsHIyOmAk4ubh5eMODjFxBkwlQhJCwiGg0BYuISkphmSElHw4GojKwchgJ5MYSCaAVFJSYkwAgyT1kFSYGqmrqGJhxosWgDVUQjAx1dPX0DODA0MmZhQlUQrWKCAkzN2NEUoANzCwIKLK0IKLC2IaDA1m5UAf0U2DvgU+AozODkjE+BiysDtwIeeWU3dwYPTy9vHNIqPry+fgyc/gGBvEFYQXBIqCQTMG+GsYRHYAWskVHYMisaAAAtwAfZwspY/gAAACV0RVh0ZGF0ZTpjcmVhdGUAMjAxOC0wMy0xNFQxNDowNjo0NCswMDowMBNWqewAAAAldEVYdGRhdGU6bW9kaWZ5ADIwMTgtMDMtMTRUMTQ6MDY6NDQrMDA6MDBiCxFQAAAARnRFWHRzb2Z0d2FyZQBJbWFnZU1hZ2ljayA2LjcuOC05IDIwMTQtMDUtMTIgUTE2IGh0dHA6Ly93d3cuaW1hZ2VtYWdpY2sub3Jn3IbtAAAAABh0RVh0VGh1bWI6OkRvY3VtZW50OjpQYWdlcwAxp/+7LwAAABh0RVh0VGh1bWI6OkltYWdlOjpoZWlnaHQAMTkyDwByhQAAABd0RVh0VGh1bWI6OkltYWdlOjpXaWR0aAAxOTLTrCEIAAAAGXRFWHRUaHVtYjo6TWltZXR5cGUAaW1hZ2UvcG5nP7JWTgAAABd0RVh0VGh1bWI6Ok1UaW1lADE1MjEwMzY0MDS9fwamAAAAD3RFWHRUaHVtYjo6U2l6ZQAwQkKUoj7sAAAAVnRFWHRUaHVtYjo6VVJJAGZpbGU6Ly8vbW50bG9nL2Zhdmljb25zLzIwMTgtMDMtMTQvNmIwY2U4ZDY3MjA1MDY0MmZmYTZmOTk1YTU3YzYyNzkuaWNvLnBuZzEJB6oAAAAASUVORK5CYII='/>
-        <!-- bootstrap_min_css -->
-    <link rel="stylesheet" type="text/css" href="/__bootstrap_min_css__">
-  </head>
-  <body>
-    <div class="container">
-        <div class="row">
-            <div class="col-md-2">
-                <form class="form-horizontal" action='/__auth__' method="POST">
-                  <fieldset>
-                    <div id="legend">
-                      <legend class="">Login</legend>
-                    </div>
-                    <div class="form-group">
-                      <!-- Username -->
-                      <label for="username">Username</label>
-                      <div class="controls">
-                        <input type="text" id="username" name="username" placeholder="" class="form-control input-xlarge ">
-                      </div>
-                    </div>
-                    <div class="form-group">
-                      <!-- Password-->
-                      <label for="password">Password</label>
-                      <div class="controls">
-                        <input type="password" id="password" name="password" placeholder="" class="form-control input-xlarge">
-                      </div>
-                    </div>
-                    <div class="form-group">
-                      <!-- Button -->
-                      <div class="controls">
-                        <button class="btn btn-success">Login</button>
-                      </div>
-                    </div>
-                  </fieldset>
-                </form>
-            </div>
-        </div>
-    </div>
-  </body>
-</html>
-`

@@ -17,8 +17,6 @@ func redirect(w http.ResponseWriter, req *http.Request) {
 }
 
 func main() {
-    config = getConfig("config.ini")
-
     printer.Debug("",config.Internal.ServerSoftware,map[string]string{
       "Port":config.Network.ServerPort,
       "IP":config.Network.ServerIp,

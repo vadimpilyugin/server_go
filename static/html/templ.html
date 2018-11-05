@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html class="no-js">
+<head>
+  <meta charset='UTF-8'>
+  <meta name='viewport' content='width=device-width, initial-scale=1'>
+  <link rel="icon" type="image/svg" href="/__folder.jpg">
+  <title>Index of {{.Name}}</title>
+  <script>
+    var r = document.querySelector("html");
+    r.className = r.className.replace(/(^|\s)no-js(\s|$)/,"$1js$2");
+  </script>
+  <link rel="stylesheet" href="/__style.css" />
+</head>
+<body>
+  <main>  
+    <h3 class="index-of"> Index of {{.Name}} </h3>
+    <table id="indexlist" class="sortable">
+      <thead>
+        <tr class="indexhead">
+          <th class="indexcolicon">
+            <img src="/__blank.svg" alt="[ICO]" />
+          </th>
+          <th class="indexcolname">
+            <a href="#">Name</a>
+          </th>
+          <th class="indexcollastmod">
+            <a href="#">Last modified</a>
+          </th>
+          <th class="indexcolsize">
+            <a href="#">Size</a>
+          </th>
+          <th class="indexcoldelete">
+            <a href="#"></a>
+          </th>
+        </tr>
+      </thead>
+      <tbody>
+        
+        {{range .Elements}}
+        <tr class="{{if .IsParent}} parent {{end}} clickable-row">
+            <td class="indexcolicon" data-value='{{.ItemRank}}'>
+                <a href="{{.Url}}">
+                    {{if .IsParent}}
+                    <img src="/__{{.Icon}}" alt="[PARENTDIR]" />
+                    {{else if .IsDir}}
+                    <img src="/__{{.Icon}}" alt="[DIR]" />
+                    {{else}}
+                    <img src="/__{{.Icon}}" alt="[   ]" />
+                    {{end}}
+                </a>
+            </td>
+            <td class="indexcolname" data-value='{{.Name}}'>
+                <a href="{{.Url}}">{{.Name}}</a>
+            </td>
+            <td class="indexcollastmod" data-value='{{.ModifDate}}'>{{.HrModifDate}}</td>
+            <td class="indexcolsize" data-value='{{.Size}}'>{{.HrSize}}</td>
+            <td class="indexcoldelete">
+                {{if not .IsDir}}
+                <a href="#" onclick="deleteLink('{{.Url}}')">
+                    <img src="/__trash.svg"/>
+                </a>
+                {{end}}
+            </td>
+        </tr>
+        {{end}}
+      </tbody>
+    </table>
+    <div>
+      <input type="file" name="file-2[]" id="file_upload" class="inputfile inputfile-2" data-multiple-caption="{count} files selected" multiple />
+      <label for="file_upload">
+      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="17" viewBox="0 0 20 17">
+        <path d="M10 0l-5.2 4.9h3.3v5.1h3.8v-5.1h3.3l-5.2-4.9zm9.3 11.5l-3.2-2.1h-2l3.4 2.6h-3.5c-.1 0-.2.1-.2.1l-.8 2.3h-6l-.8-2.2c-.1-.1-.1-.2-.2-.2h-3.6l3.4-2.6h-2l-3.2 2.1c-.4.3-.7 1-.6 1.5l.6 3.1c.1.5.7.9 1.2.9h16.3c.6 0 1.1-.4 1.3-.9l.6-3.1c.1-.5-.2-1.2-.7-1.5z"/>
+      </svg> 
+      <span> Загрузить файлы</span>
+      </label>
+    </div>
+    <footer>
+      <i>Apache directory</i>
+    </footer>
+  </main>
+  <script src="/__myscript.js"></script>
+  </body>
+</html>

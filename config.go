@@ -30,20 +30,27 @@ type Auth struct {
   Password string     `ini:"password"`
 }
 
+type Static struct {
+  DirlistTempl string   `ini:"dirlist_template"`
+  AuthTempl string      `ini:"auth_template"`
+}
+
 type Config struct {
   Internal    `ini:"internal"`
   Network     `ini:"network"`
   Openssl     `ini:"openssl"`
   Auth        `ini:"auth"`
+  Static      `ini:"static"`
 }
+
 
 var config *Config
 
-func getConfig(fn string) *Config {
-    c := new(Config)
-    err := ini.MapTo(c, fn)
-    if err != nil {
-      printer.Fatal(err)
-    }
-    return c
+func init() {
+  fn := "config.ini"
+  config = new(Config)
+  err := ini.MapTo(config, fn)
+  if err != nil {
+    printer.Fatal(err)
+  }
 }
