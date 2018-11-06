@@ -1,0 +1,8 @@
+Download server release archive, unpack into any folder. Edit root_dir in config.ini.
+
+On Windows: 
+Launch server.exe. Note: to correctly display colors in cmd.exe, follow this instruction:
+  In latest Windows 10, you can enable ANSI via the following reghack:
+  1) in HKCU\Console create a DWORD named VirtualTerminalLevel and set it to 0x1
+  2) restart cmd.exe
+On Linux: open terminal window, cd into folder containing server executable, then do ./server

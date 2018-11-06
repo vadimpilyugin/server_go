@@ -1,9 +1,26 @@
 Bugs:
 Display correct size for symlinks
-Fullscreen videos still have some bugs, such as not closing properly
 Finish work on extensions, specifically, remove the call to printer.Note
+Wait for the user to press OK after alerting about connection problems
+Add fixed width to icons
+Firefox:
+Warns about empty attributes "type" and "source" of a video tag
+Requires video tag to have a "type" attribute
+IsFullscreen function works only in Chrome
+Windows:
+As a result of the bug with symlinks, symlinks are treated as octet/stream and not as directories
+1) Error: remove C:\...: The process cannot access the file because it is being used by another process
+2) Debug: open C:\/Users/vadim/Downloads/C:\Users\vadim\Documents\favicon.ico: The filename, directory name, or volume label syntax is incorrect.
+--- File name: C:\Users\vadim\Documents\favicon.ico
+--- File path: C:\/Users/vadim/Downloads/C:\Users\vadim\Documents\favicon.ico
+--- File size: 5 КБ
+--- Exists? false
+Fatal error: open C:\/Users/vadim/Downloads/C:\Users\vadim\Documents\favicon.ico: The filename, directory name, or volume label syntax is incorrect.
+Fixed:
+Fullscreen videos still have some bugs, such as not closing properly
 
 Future work:
+Different icon for forbidden directories
 Sorting, mime-based sorting?
 Locally generated QR codes
 Image Viewer
