@@ -40,7 +40,11 @@
           {{range .Elements}}
           <tr class="{{if .IsParent}} parent {{end}} clickable-row">
               <td class="indexcolicon" data-value='{{.ItemRank}}'>
+                  {{if .IsViewable}}
+                  <a href="{{.Url}}" onclick="showVideo(event, '{{.Url}}')">
+                  {{else}}
                   <a href="{{.Url}}">
+                  {{end}}
                       {{if .IsParent}}
                       <img src="/__{{.Icon}}" alt="[PARENTDIR]" />
                       {{else if .IsDir}}

@@ -345,7 +345,7 @@ label {
 
 .video-overlay > video {
   background: #000;
-  /*max-height: 80vh;*/
+  max-height: 80vh;
   width: 100%;
 }
 
@@ -372,7 +372,7 @@ label {
   }
   .video-overlay {
     width: 460px;
-    max-height: auto;
+    /*max-height: auto;*/
   }
 }
 

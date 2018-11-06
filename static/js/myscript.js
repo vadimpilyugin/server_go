@@ -113,8 +113,37 @@ function makeDraggable (el) {
   }
 }
 
+function fullScreenCancel() {
+  if(document.cancelFullscreen) {
+    console.log("Something!");
+    document.cancelFullscreen();
+  } else if(document.webkitCancelFullScreen ) {
+    console.log("Something!");
+    document.webkitCancelFullScreen();
+  } else if(document.mozCancelFullScreen) {
+    console.log("Something!");
+    document.mozCancelFullScreen();
+  }
+}
+
+function isFullscreen() {
+  // if(document.isFullscreen) {
+  //   console.log("Something!");
+  //   return document.isFullscreen;
+  // } else if(document.webkitIsFullScreen ) {
+  //   console.log("Something!");
+  //   return document.webkitIsFullScreen;
+  // } else if(document.mozIsFullScreen) {
+  //   console.log("Something!");
+  //   document.mozIsFullScreen;
+  // }
+  if (document.webkitIsFullScreen)
+    console.log("Something!");
+  return document.webkitIsFullScreen;
+}
+
 function hideVideo () {
-  if (!isShown || clickImmunity)
+  if (!isShown || clickImmunity || isFullscreen())
     return;
   isShown = false;
   let video = document.querySelector("#videoFrame");
