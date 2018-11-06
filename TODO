@@ -4,7 +4,8 @@ Fullscreen videos still have some bugs, such as not closing properly
 Finish work on extensions, specifically, remove the call to printer.Note
 
 Future work:
+Sorting, mime-based sorting?
 Image Viewer
 Music Player
-Maybe API-based web application?
+Maybe API-based web application? (a way to not close the video while browsing around)
 Speedometer?
