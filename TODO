@@ -1,7 +1,10 @@
 Bugs:
 Display correct size for symlinks
 Finish work on extensions, specifically, remove the call to printer.Note
-Firefox warns about empty attributes "type" and "source" of a video tag
+Firefox:
+Warns about empty attributes "type" and "source" of a video tag
+Requires video tag to have a "type" attribute
+IsFullscreen function works only in Chrome
 Windows:
 As a result of the bug with symlinks, symlinks are treated as octet/stream and not as directories
 Fixed:
