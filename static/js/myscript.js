@@ -117,7 +117,6 @@ function hideVideo () {
   if (!isShown || clickImmunity)
     return;
   isShown = false;
-  Document.exitFullscreen();
   let video = document.querySelector("#videoFrame");
   let overlay = document.querySelector(".video-overlay");
   overlay.classList.remove('show');
