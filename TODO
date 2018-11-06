@@ -1,9 +1,13 @@
 Bugs:
 Display correct size for symlinks
-Fullscreen videos still have some bugs, such as not closing properly
 Finish work on extensions, specifically, remove the call to printer.Note
+Windows:
+As a result of the bug with symlinks, symlinks are treated as octet/stream and not as directories
+Fixed:
+Fullscreen videos still have some bugs, such as not closing properly
 
 Future work:
+Different icon for forbidden directories
 Sorting, mime-based sorting?
 Image Viewer
 Music Player
