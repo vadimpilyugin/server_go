@@ -116,18 +116,13 @@ func serveFile(w http.ResponseWriter, r *http.Request, fs http.Dir, name string)
     }
 
     buf := new(bytes.Buffer)
-    err := dirList(buf,f,name,cookie)
+    maxModtime, err := dirList(buf,f,name,cookie)
     if err != nil {
       printer.Error(err)
       http.Error(w, "Error reading directory", http.StatusInternalServerError)
       return
     }
     w.Header().Set("Content-Type", "text/html; charset=utf-8")
-    maxModtime := d.ModTime()
-    templStat,_ := os.Stat(config.Static.DirlistTempl)
-    if templStat.ModTime().Unix() > maxModtime.Unix() {
-      maxModtime = templStat.ModTime()
-    }
     http.ServeContent(w, r, d.Name(), maxModtime, bytes.NewReader(buf.Bytes()))
   } else {
     if r.Method == "DELETE" {

@@ -14,6 +14,8 @@ import (
   "github.com/vadimpilyugin/debug_print_go"
   "io/ioutil"
   "path"
+  "mime"
+  "bufio"
 )
 
 type Directory struct {
@@ -33,6 +35,7 @@ type Elem struct {
   HrSize string
   IsParent bool
   Icon string
+  IsViewable bool
 }
 
 const (
@@ -50,18 +53,100 @@ const (
   fileRank = 2
 )
 
-func fnToIcon (s string) string {
+func init () {
+  readMimeMap()
+}
+
+var mapMimeToIcon map[string]string
+var lastModTime time.Time = time.Unix(0,0)
+
+func readMimeMap () {
+  file, err := os.Open(config.Static.MimeMap)
+  if err != nil {
+    printer.Fatal(err)
+  }
+  defer file.Close()
+
+  stat, err := file.Stat()
+  if err != nil {
+    printer.Fatal(err)
+  }
+  currModTime := stat.ModTime()
+  if currModTime.Unix() == lastModTime.Unix() {
+    return
+  }
+  lastModTime = currModTime
+
+  mapMimeToIcon = make(map[string]string)
+
+  scanner := bufio.NewScanner(file)
+  for scanner.Scan() {
+    line := scanner.Text()
+    ar := strings.Split(line, " ")
+    icon := ar[0]
+    for _, v := range ar[1:] {
+      mapMimeToIcon[v] = icon
+    }
+  }
+
+  if err := scanner.Err(); err != nil {
+    printer.Fatal(err)
+  }
+}
+
+func fnToIcon (info os.FileInfo, name string) string {
+  const unknown = "unknown.svg"
+
+  s := info.Name()
   ext := path.Ext(s)
-  icon, found := mapExtToIcon[ext]
+  icon, found := mapMimeToIcon[ext]
   if found {
     return icon
   }
-  return "unknown.svg"
+  ext = strings.ToLower(ext)
+  icon, found = mapMimeToIcon[ext]
+  if found {
+    return icon
+  }
+  // open file, read 512 bytes, determine MIME type
+  f, err := os.Open(path.Join(config.Internal.RootDir, "."+name, info.Name()))
+  if err != nil {
+    printer.Error(err, path.Join(name, info.Name()))
+    return unknown
+  }
+  defer f.Close()
+  buf := make([]byte, 512)
+  n, err := f.Read(buf)
+  if err != nil && err != io.EOF || (err == io.EOF && n != 0) {
+    printer.Error(err, path.Join(name, info.Name()))
+    return unknown
+  }
+  ctype := http.DetectContentType(buf)
+  mediatype, _, _ := mime.ParseMediaType(ctype)
+  icon, found = mapMimeToIcon[mediatype]
+  if found {
+    return icon
+  }
+  if mediatype != "application/octet-stream" || ext != "" {
+    printer.Note(mediatype, info.Name())
+  } else {
+    return unknown
+  }
+  parts := strings.Split(mediatype, "/")
+  icon, found = mapMimeToIcon[parts[0]]
+  if found {
+    return icon
+  }
+  return unknown
 }
 
-var mapExtToIcon = map[string]string{".zip": "archive.svg", ".7z": "archive.svg", ".bz2": "archive.svg", ".cab": "archive.svg", ".gz": "archive.svg", ".tar": "archive.svg", ".rar": "archive.svg", ".aac": "audio.svg", ".aif": "audio.svg", ".aifc": "audio.svg", ".aiff": "audio.svg", ".ape": "audio.svg", ".au": "audio.svg", ".flac": "audio.svg", ".iff": "audio.svg", ".m4a": "audio.svg", ".mid": "audio.svg", ".mp3": "audio.svg", ".mpa": "audio.svg", ".ra": "audio.svg", ".wav": "audio.svg", ".wma": "audio.svg", ".f4a": "audio.svg", ".f4b": "audio.svg", ".oga": "audio.svg", ".ogg": "audio.svg", ".xm": "audio.svg", ".it": "audio.svg", ".s3m": "audio.svg", ".mod": "audio.svg", ".bin": "bin.svg", ".hex": "bin.svg", ".xml": "code.svg", ".doc": "doc.svg", ".docx": "doc.svg", ".docm": "doc.svg", ".dot": "doc.svg", ".dotx": "doc.svg", ".dotm": "doc.svg", ".log": "doc.svg", ".msg": "doc.svg", ".odt": "doc.svg", ".pages": "doc.svg", ".rtf": "doc.svg", ".tex": "doc.svg", ".wpd": "doc.svg", ".wps": "doc.svg", ".bmp": "img.svg", ".png": "img.svg", ".tiff": "img.svg", ".tif": "img.svg", ".gif": "img.svg", ".jpg": "img.svg", ".jpeg": "img.svg", ".jpe": "img.svg", ".psd": "img.svg", ".ai": "img.svg", ".ico": "img.svg", ".xlsx": "spreadsheet.svg", ".xlsm": "spreadsheet.svg", ".xltx": "spreadsheet.svg", ".xltm": "spreadsheet.svg", ".xlam": "spreadsheet.svg", ".xlr": "spreadsheet.svg", ".xls": "spreadsheet.svg", ".csv": "spreadsheet.svg", ".ppt": "presentation.svg", ".pptx": "presentation.svg", ".pot": "presentation.svg", ".potx": "presentation.svg", ".pptm": "presentation.svg", ".potm": "presentation.svg", ".xps": "presentation.svg", ".cpp": "c++.svg", ".c": "c.svg", ".css": "css3.svg", ".sass": "css3.svg", ".scss": "css3.svg", ".less": "css3.svg", ".ttf": "font.svg", ".TTF": "font.svg", ".woff": "font.svg", ".WOFF": "font.svg", ".woff2": "font.svg", ".WOFF2": "font.svg", ".otf": "font.svg", ".OTF": "font.svg", ".h": "h.svg", ".html": "html5.svg", ".xhtml": "html5.svg", ".shtml": "html5.svg", ".htm": "html5.svg", ".URL": "html5.svg", ".url": "html5.svg", ".nfo": "info.svg", ".info": "info.svg", ".iso": "iso.svg", ".img": "iso.svg", ".jar": "java.svg", ".java": "java.svg", ".js": "js.svg", ".json": "js.svg", ".md": "markdown.svg", ".pkg": "package.svg", ".dmg": "package.svg", ".rpm": "package.svg", ".deb": "package.svg", ".pdf": "pdf.svg", ".php": "php.svg", ".phtml": "php.svg", ".py": "py.svg", ".rb": "rb.svg", ".bat": "script.svg", ".BAT": "script.svg", ".cmd": "script.svg", ".sh": "script.svg", ".ps": "script.svg", ".exe": "script.svg", ".EXE": "script.svg", ".msi": "script.svg", ".MSI": "script.svg", ".sql": "sql.svg", ".txt": "text.svg", ".cnf": "text.svg", ".conf": "text.svg", ".map": "text.svg", ".yaml": "text.svg", ".svg": "vector.svg", ".svgz": "vector.svg", ".asf": "video.svg", ".asx": "video.svg", ".avi": "video.svg", ".flv": "video.svg", ".mkv": "video.svg", ".mov": "video.svg", ".mp4": "video.svg", ".mpg": "video.svg", ".rm": "video.svg", ".srt": "video.svg", ".swf": "video.svg", ".vob": "video.svg", ".wmv": "video.svg", ".m4v": "video.svg", ".f4v": "video.svg", ".f4p": "video.svg", ".ogv": "video.svg"}
+func isViewable (ext string) bool {
+  return ext == ".webm" || ext == ".mp4" || ext == ".mkv" || ext == ".ogg"
+}
 
 func toDirectory(dirs []os.FileInfo, name string, cookie string) Directory {
+  readMimeMap()
+
   d := Directory{
     Name: name, 
     Address: fmt.Sprintf(
@@ -113,7 +198,8 @@ func toDirectory(dirs []os.FileInfo, name string, cookie string) Directory {
         ItemRank: fileRank,
         HrModifDate: hrModifDate(x.ModTime()),
         HrSize: hrSize(x.Size()),
-        Icon: fnToIcon(x.Name()),
+        Icon: fnToIcon(x, name),
+        IsViewable: isViewable(path.Ext(x.Name())),
       }
     }
 
@@ -180,10 +266,30 @@ func greater (b1, b2 bool) bool {
   }
 }
 
-func dirList(w io.Writer, f http.File, name string, cookie string) error {
+func trueModTime (name string) (time.Time) {
+  maxModTime := serverStartTime
+  var files = []string{
+    config.Static.DirlistTempl, 
+    config.Static.MimeMap,
+    path.Join(config.Internal.RootDir, "."+name),
+  }
+
+  for _,k := range files {
+    tmpStat, err := os.Stat(k)
+    if err != nil {
+      printer.Fatal(err)
+    }
+    if tmpStat.ModTime().Unix() > maxModTime.Unix() {
+      maxModTime = tmpStat.ModTime()
+    }
+  }
+  return maxModTime
+}
+
+func dirList(w io.Writer, f http.File, name string, cookie string) (time.Time, error) {
   dirs, err := f.Readdir(-1)
   if err != nil {
-    return err
+    return serverStartTime, err
   }
   b := dirs[:0]
   for _, x := range dirs {
@@ -204,12 +310,12 @@ func dirList(w io.Writer, f http.File, name string, cookie string) error {
   if err != nil {
     printer.Fatal(err)
   }
-  p := toDirectory(dirs,name,cookie)
+  p := toDirectory(dirs, name, cookie)
   err = t.Execute(w, p)
   if err != nil {
-    return err
+    return serverStartTime, err
   }
-  return nil
+  return trueModTime(name), nil
 }
 
 func generateAuthPage(w io.Writer) {

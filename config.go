@@ -33,6 +33,7 @@ type Auth struct {
 type Static struct {
   DirlistTempl string   `ini:"dirlist_template"`
   AuthTempl string      `ini:"auth_template"`
+  MimeMap string      `ini:"mime_map"`
 }
 
 type Config struct {
