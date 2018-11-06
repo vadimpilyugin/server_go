@@ -155,8 +155,8 @@ function hideVideo () {
 
 function showVideo (e, s) {
   e.preventDefault();
+  e.stopPropagation();
   isShown = true;
-  event.stopPropagation();
   let overlay = document.querySelector(".video-overlay");
   overlay.classList.remove('hide');
   overlay.classList.add('show');
