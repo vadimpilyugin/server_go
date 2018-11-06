@@ -5,6 +5,7 @@ Finish work on extensions, specifically, remove the call to printer.Note
 
 Future work:
 Sorting, mime-based sorting?
+Locally generated QR codes
 Image Viewer
 Music Player
 Maybe API-based web application? (a way to not close the video while browsing around)
