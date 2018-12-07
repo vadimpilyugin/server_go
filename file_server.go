@@ -111,7 +111,8 @@ func serveFile(w http.ResponseWriter, r *http.Request, fs http.Dir, name string)
       if err != nil {
         printer.Error(err)
       }
-      localRedirect(w, r, "./")
+      // localRedirect(w, r, "./")
+      w.WriteHeader(http.StatusOK)
       return
     }
 
