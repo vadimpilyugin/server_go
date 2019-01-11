@@ -1,8 +1,6 @@
 Bugs:
-Empty page after POST request in Chrome
 Display correct size for symlinks
-Finish work on extensions, specifically, remove the call to printer.Note
-Wait for the user to press OK after alerting about connection problems
+Rename file correctly if another one with the same name already exists
 Add fixed width to icons
 Firefox:
 Warns about empty attributes "type" and "source" of a video tag

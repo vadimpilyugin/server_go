@@ -1,7 +1,7 @@
 function deleteLink (s) {
   let isConfirm = confirm('Точно?');
   if (!isConfirm) {
-    return true;
+    return;
   }
   console.log("Delete link clicked; url: ", s);
   var request = new XMLHttpRequest();
@@ -11,20 +11,20 @@ function deleteLink (s) {
     if (request.status >= 200 && request.status < 400) {
       // Success!
       console.log("Successfull DELETE request, redirecting to ---> ", window.location);
-      location.reload();
+      location.reload(true);
     } else {
       // We reached our target server, but it returned an error
-      alert("We reached our target server, but it returned an error");
+      confirm("We reached our target server, but it returned an error");
     }
   };
 
   request.onerror = function() {
     // There was a connection error of some sort
-    alert("There was a connection error of some sort")
+    confirm("There was a connection error of some sort")
   };
 
   request.send();
-  return true;
+  return;
 }
 
 var lastHovered;

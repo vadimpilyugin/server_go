@@ -100,11 +100,11 @@ func serveFile(w http.ResponseWriter, r *http.Request, fs http.Dir, name string)
           }
         }
 
-        copyTo,err := os.Create(path)
+        copyTo, err := os.Create(path)
         if err != nil {
           printer.Fatal(err)
         }
-        copyFrom,err := fileHeader.Open()
+        copyFrom, err := fileHeader.Open()
         if err != nil {
           printer.Fatal(err)
         }
