@@ -82,19 +82,22 @@ func serveFile(w http.ResponseWriter, r *http.Request, fs http.Dir, name string)
         fn := fileHeader.Filename
         path := path.Clean(string(fs)+name+"/"+fn)
 
-        file,err := os.Open(path)
-        exists := err == nil
-        printer.Debug(err)
-        s := fmt.Sprintf(
-          "--- File name: %s\n--- File path: %s\n--- File size: %s\n--- Exists? %v\n",
-          fn, path,
-          hrSize(fileHeader.Size),
-          exists,
-        )
-        printer.Debug(s,"")
-        if exists {
-          file.Close()
-          path = path+"(1)"
+        for {
+          file, err := os.Open(path)
+          exists := err == nil
+          s := fmt.Sprintf(
+            "--- File name: %s\n--- Absolute path: %s\n--- File size: %s\n--- Exists? %v\n",
+            fn, path,
+            hrSize(fileHeader.Size),
+            exists,
+          )
+          printer.Debug(s,"File Upload")
+          if exists {
+            file.Close()
+            path = path+"(1)"
+          } else {
+            break
+          }
         }
 
         copyTo,err := os.Create(path)
@@ -111,8 +114,8 @@ func serveFile(w http.ResponseWriter, r *http.Request, fs http.Dir, name string)
       if err != nil {
         printer.Error(err)
       }
-      // localRedirect(w, r, "./")
-      w.WriteHeader(http.StatusOK)
+      localRedirect(w, r, "./")
+      // w.WriteHeader(http.StatusOK)
       return
     }
 
@@ -150,11 +153,11 @@ func localRedirect(w http.ResponseWriter, r *http.Request, newPath string) {
     newPath += "?" + q
   }
   w.Header().Set("Location", newPath)
-  // if r.Method == "POST" {
-    // w.WriteHeader(http.StatusTemporaryRedirect)
-  // } else {
+  if r.Method == "POST" {
+    w.WriteHeader(http.StatusSeeOther)
+  } else {
     w.WriteHeader(http.StatusMovedPermanently)
-  // }
+  }
 }
 
 
