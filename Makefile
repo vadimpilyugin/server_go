@@ -17,7 +17,6 @@ run:
 	$(GOBUILD) -o $(BINARY_NAME) -v ./...
 	./$(BINARY_NAME)
 deps:
-	$(GOGET) github.com/vadimpilyugin/debug_print_go
 	$(GOGET) github.com/jehiah/go-strftime
 	$(GOGET) github.com/go-ini/ini
 

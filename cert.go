@@ -2,7 +2,7 @@ package main
 
 import (
 	"crypto/tls"
-	"github.com/vadimpilyugin/debug_print_go"
+	"debug_print_go"
 )
 
 func loadCert() tls.Certificate {

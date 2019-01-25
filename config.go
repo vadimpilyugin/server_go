@@ -2,7 +2,7 @@ package main
 
 import (
 	"github.com/go-ini/ini"
-	"github.com/vadimpilyugin/debug_print_go"
+	"debug_print_go"
 )
 
 type Internal struct {

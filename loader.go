@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/vadimpilyugin/debug_print_go"
+	"debug_print_go"
 	"io/ioutil"
 	"path"
 )

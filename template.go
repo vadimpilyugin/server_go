@@ -4,7 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"github.com/jehiah/go-strftime"
-	"github.com/vadimpilyugin/debug_print_go"
+	"debug_print_go"
 	"io"
 	"io/ioutil"
 	"mime"
