@@ -3,9 +3,9 @@ package main
 import (
 	"bytes"
 	"crypto/sha256"
+	"debug_print_go"
 	"errors"
 	"fmt"
-	"debug_print_go"
 	"math/rand"
 	"net/http"
 	"sync"

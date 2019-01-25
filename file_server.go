@@ -2,8 +2,8 @@ package main
 
 import (
 	"bytes"
-	"fmt"
 	"debug_print_go"
+	"fmt"
 	"io"
 	"net/http"
 	"os"
@@ -70,7 +70,7 @@ func serveFile(w http.ResponseWriter, r *http.Request, fs http.Dir, name string)
 
 	if d.IsDir() {
 		if r.Method == "POST" {
-      postStarted := time.Now()
+			postStarted := time.Now()
 			err := r.ParseMultipartForm(10 * mb)
 			if err != nil {
 				printer.Error(err)
@@ -82,23 +82,23 @@ func serveFile(w http.ResponseWriter, r *http.Request, fs http.Dir, name string)
 				fileHeader := r.MultipartForm.File[fileField][v]
 				fn := fileHeader.Filename
 				path := path.Clean(string(fs) + name + "/" + fn)
-        duration := time.Since(postStarted)
+				duration := time.Since(postStarted)
 
-        for {
-          file, err := os.Open(path)
-          exists := err == nil
+				for {
+					file, err := os.Open(path)
+					exists := err == nil
 					if exists {
 						file.Close()
 						path = path + "(1)"
 					} else {
-            speed := int64(float64(fileHeader.Size) / duration.Seconds())
-            printer.Debug("", "File Upload", map[string]string {
-              "Filename" : fn,
-              "Absolute path" : path,
-              "File size" : hrSize(fileHeader.Size),
-              "Duration" : fmt.Sprintf("%v", duration),
-              "Speed" : hrSize(speed) + "/с",
-            })
+						speed := int64(float64(fileHeader.Size) / duration.Seconds())
+						printer.Debug("", "File Upload", map[string]string{
+							"Filename":      fn,
+							"Absolute path": path,
+							"File size":     hrSize(fileHeader.Size),
+							"Duration":      fmt.Sprintf("%v", duration),
+							"Speed":         hrSize(speed) + "/с",
+						})
 						break
 					}
 				}
@@ -116,8 +116,8 @@ func serveFile(w http.ResponseWriter, r *http.Request, fs http.Dir, name string)
 			err = r.MultipartForm.RemoveAll()
 			if err != nil {
 				printer.Error(err)
-      }
-      localRedirect(w, r, "./")
+			}
+			localRedirect(w, r, "./")
 			return
 		}
 

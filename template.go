@@ -2,9 +2,9 @@ package main
 
 import (
 	"bufio"
+	"debug_print_go"
 	"fmt"
 	"github.com/jehiah/go-strftime"
-	"debug_print_go"
 	"io"
 	"io/ioutil"
 	"mime"
