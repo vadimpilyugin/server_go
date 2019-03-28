@@ -1,4 +1,5 @@
 Bugs:
+Display day of the week for the last day, even if it's been less than 24 hours since then
 Display correct size for symlinks
 Rename file correctly if another one with the same name already exists
 Add fixed width to icons
