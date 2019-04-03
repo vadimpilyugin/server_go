@@ -36,6 +36,7 @@ type Elem struct {
 	IsParent    bool
 	Icon        string
 	IsViewable  bool
+	ListNo int
 }
 
 const (
@@ -156,6 +157,9 @@ func toDirectory(dirs []os.FileInfo, name string, cookie string) Directory {
 			config.Network.ServerPort,
 		),
 	}
+
+	listNo := 0
+
 	if name != "/" {
 		d.Elements = append(d.Elements, Elem{
 			Name:        upName,
@@ -168,7 +172,9 @@ func toDirectory(dirs []os.FileInfo, name string, cookie string) Directory {
 			HrSize:      noInfo,
 			IsParent:    true,
 			Icon:        "folder-home.svg",
+			ListNo: listNo,
 		})
+		listNo++
 	}
 	for _, x := range dirs {
 		var elem Elem
@@ -183,6 +189,7 @@ func toDirectory(dirs []os.FileInfo, name string, cookie string) Directory {
 				HrModifDate: hrModifDate(x.ModTime()),
 				HrSize:      noInfo,
 				Icon:        "folder.svg",
+				ListNo: listNo,
 			}
 		} else {
 			elem_url := urlEscape(x.Name())
@@ -200,25 +207,28 @@ func toDirectory(dirs []os.FileInfo, name string, cookie string) Directory {
 				HrSize:      hrSize(x.Size()),
 				Icon:        fnToIcon(x, name),
 				IsViewable:  isViewable(path.Ext(x.Name())),
+				ListNo: listNo,
 			}
 		}
 
 		d.Elements = append(d.Elements, elem)
+		listNo++
 	}
 	return d
 }
 
-func hrModifDate(modif_date time.Time) string {
-	const Day = 24 * 3600
-	const Week = 7 * Day // seconds
-	elapsed_time := time.Now().Sub(modif_date).Seconds()
+func hrModifDate(modDate time.Time) string {
+	now := time.Now()
+	yesterday := now.Hour() * 3600 + now.Minute() * 60 + now.Second()
+	const Week = 7 * 24 * 3600 // seconds
+	timeElapsed := now.Sub(modDate).Seconds()
 
-	if elapsed_time > Week {
-		return strftime.Format("%a, %d %b %H:%M", modif_date)
-	} else if elapsed_time > Day {
-		return strftime.Format("%a, %H:%M", modif_date)
+	if timeElapsed > Week {
+		return strftime.Format("%a, %d %b %H:%M", modDate)
+	} else if timeElapsed > float64(yesterday) {
+		return strftime.Format("%a, %H:%M", modDate)
 	} else { // сегодня
-		return strftime.Format("%H:%M", modif_date)
+		return strftime.Format("%H:%M", modDate)
 	}
 }
 
@@ -300,7 +310,7 @@ func dirList(w io.Writer, f http.File, name string, cookie string) (time.Time, e
 	dirs = b
 
 	sort.Slice(dirs, func(i, j int) bool {
-		return dirs[j].ModTime().Unix() < dirs[i].ModTime().Unix()
+		return dirs[j].ModTime().UnixNano() < dirs[i].ModTime().UnixNano()
 	})
 	sort.SliceStable(dirs, func(i, j int) bool {
 		return greater(dirs[i].IsDir(), dirs[j].IsDir())

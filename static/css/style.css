@@ -91,6 +91,10 @@ tr.indexhead {
   background-color: #F9F9F9;
 }
 
+tr th a {
+  display: inline-block;
+}
+
 tr a {
   display: flex;
   color: #2980b9;
@@ -114,8 +118,17 @@ th {
   font-size: 1.05em;
 }
 
+table thead tr th span {
+  color: #2980b9;
+}
+
+table thead tr {
+  height: 45px;
+}
+
 th.indexcolicon {
   padding-right: 10px;
+  text-align: center;
 }
 
 .indexcolname {
@@ -130,18 +143,13 @@ th.indexcollastmod {
 .indexcolsize {
   min-width: 100px;
   padding: 0 20px;
+  text-align: left;
 }
 
 .indexcoldelete {
   /*min-width: 40px;*/
   padding: 0 10px;
 }
-
-.indexcolsize {
-  /*padding-left: 20px;*/
-  text-align: center;
-}
-
 .indexcolsize > a {
   display: inline-block;
 }

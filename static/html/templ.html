@@ -19,7 +19,7 @@
         <thead>
           <tr class="indexhead">
             <th class="indexcolicon">
-              <img src="/__blank.svg" alt="[ICO]" />
+              <!-- <img src="/__blank.svg" alt="[ICO]" /> -->
             </th>
             <th class="indexcolname">
               <a href="#">Name</a>
@@ -39,7 +39,7 @@
           
           {{range .Elements}}
           <tr class="{{if .IsParent}} parent {{end}} clickable-row">
-              <td class="indexcolicon" data-value='{{.ItemRank}}'>
+              <td class="indexcolicon" sorttable_customkey='{{.ListNo}}'>
                   {{if .IsViewable}}
                   <a href="{{.Url}}" onclick="showVideo(event, '{{.Url}}')">
                   {{else}}
@@ -54,15 +54,15 @@
                       {{end}}
                   </a>
               </td>
-              <td class="indexcolname" data-value='{{.Name}}'>
+              <td class="indexcolname" sorttable_customkey='{{.Name}}'>
                 {{if .IsViewable}}
                 <a href="{{.Url}}" onclick="showVideo(event, '{{.Url}}')">{{.Name}}</a>
                 {{else}}
                 <a href="{{.Url}}">{{.Name}}</a>
                 {{end}}
               </td>
-              <td class="indexcollastmod" data-value='{{.ModifDate}}'>{{.HrModifDate}}</td>
-              <td class="indexcolsize" data-value='{{.Size}}'>{{.HrSize}}</td>
+              <td class="indexcollastmod" sorttable_customkey='{{.ModifDate}}'>{{.HrModifDate}}</td>
+              <td class="indexcolsize" sorttable_customkey='{{.Size}}'>{{.HrSize}}</td>
               <td class="indexcoldelete">
               <!-- <a href="./" onclick="deleteLink('{{.Url}}')">
                   <img src="/__ellipsis.png"/>
@@ -104,6 +104,7 @@
   </div>
   <script src="/__myscript.js"></script>
   <script src="/__custom-file-input.js"></script>
+  <script src="/__sorttable.js"></script>
 
   <div class="barcode-overlay hide" onclick="hideImage()">
     <div class="barcode-frame">
