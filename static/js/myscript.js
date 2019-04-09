@@ -1,3 +1,5 @@
+var fileToEdit = ""
+
 function deleteLink (s) {
   let isConfirm = confirm('Точно?');
   if (!isConfirm) {
@@ -183,4 +185,79 @@ function videoLeave () {
   clickImmunity = false;
   document.querySelector("body").classList.remove('no-scroll');
   console.log("Video left:", isEntered);
+}
+
+function loadData(path) {
+  var request = new XMLHttpRequest();
+  request.open('GET', path, true);
+
+  request.onload = function() {
+    if (request.status >= 200 && request.status < 400) {
+      // Success!
+      var resp = request.responseText;
+      editor.setValue(resp);
+    } else {
+      // We reached our target server, but it returned an error
+
+    }
+  };
+
+  request.onerror = function() {
+    // There was a connection error of some sort
+  };
+
+  request.send();
+}
+
+function saveData() {      
+  // your CodeMirror textarea ID
+  var textToWrite = editor.getValue();
+
+  console.log("Saving: ", textToWrite.length, " characters")
+
+  var formData = new FormData();
+
+  var textFileAsBlob = new Blob([textToWrite], {type:'text/plain'});
+
+  formData.append("file", textFileAsBlob, fileToEdit);
+
+  console.log("fileToEdit:", fileToEdit)
+
+  var request = new XMLHttpRequest();
+  request.open("POST", './');
+  request.send(formData);
+}
+
+function showEditor (thisEl, path) {
+  let overlay = document.querySelector("#overlay");
+  overlay.classList.remove('hide');
+  overlay.classList.add('show');
+  loadData(path);
+  var lastHovered = thisEl.parentElement.parentElement;
+  lastHovered.classList.remove("hashover");
+  setTimeout(function() {
+    lastHovered.classList.add("hashover");
+  }, 100);
+  fileToEdit = path;
+}
+
+function hideEditor () {
+  let overlay = document.querySelector(".codemirror-overlay");
+  overlay.classList.remove('show');
+  overlay.classList.add('hide');
+}
+
+
+function hideOverlay(e) {
+  if (!e.target.hasAttribute("closer") && e.currentTarget != e.target) {
+    // do nothing
+    console.log("click on inner frame")
+    console.log("the element:", e.target)
+    foo = e.target;
+  } else {
+    let overlay = document.querySelector("#overlay");
+    overlay.classList.remove('show');
+    overlay.classList.add('hide');
+  }
+
 }

@@ -9,6 +9,7 @@ type Internal struct {
 	RootDir        string `ini:"root_dir"`
 	ServerSoftware string `ini:"server_software"`
 	Hostname       string `ini:"hostname"`
+	DoOverwrite       bool `ini:"overwrite"`
 }
 
 type Network struct {

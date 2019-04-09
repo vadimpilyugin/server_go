@@ -13,6 +13,11 @@ import (
 	"time"
 )
 
+const (
+	PERM_ALL       = 0644
+	MODE_WRITE     = os.O_CREATE | os.O_WRONLY | os.O_TRUNC
+)
+
 var serverStartTime time.Time = time.Now()
 
 const fileField = "file"
@@ -87,7 +92,7 @@ func serveFile(w http.ResponseWriter, r *http.Request, fs http.Dir, name string)
 				for {
 					file, err := os.Open(path)
 					exists := err == nil
-					if exists {
+					if exists && !config.DoOverwrite {
 						file.Close()
 						path = path + "(1)"
 					} else {
@@ -103,7 +108,7 @@ func serveFile(w http.ResponseWriter, r *http.Request, fs http.Dir, name string)
 					}
 				}
 
-				copyTo, err := os.Create(path)
+				copyTo, err := os.OpenFile(path, MODE_WRITE, PERM_ALL)
 				if err != nil {
 					printer.Fatal(err)
 				}

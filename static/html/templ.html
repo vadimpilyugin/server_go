@@ -4,6 +4,11 @@
   <meta charset='UTF-8'>
   <meta name='viewport' content='width=device-width, initial-scale=1'>
   <link rel="icon" type="image/png" href="/__favicon.png">
+
+  <link rel="stylesheet" href="/__codemirror.css">
+  <script src="/__codemirror.js"></script>
+  <script src="/__yaml.js"></script>
+
   <title>Index of {{.Name}}</title>
   <script>
     var r = document.querySelector("html");
@@ -64,9 +69,6 @@
               <td class="indexcollastmod" sorttable_customkey='{{.ModifDate}}'>{{.HrModifDate}}</td>
               <td class="indexcolsize" sorttable_customkey='{{.Size}}'>{{.HrSize}}</td>
               <td class="indexcoldelete">
-              <!-- <a href="./" onclick="deleteLink('{{.Url}}')">
-                  <img src="/__ellipsis.png"/>
-              </a> -->
                   {{if not .IsDir}}
                   <div class="dropdown hashover">
                     <a href="javascript:void(0)" class="dropbtn">
@@ -78,6 +80,9 @@
                       </a>
                       <a href="javascript:void(0)" onclick="generateQrCode(this, '{{.Url}}')">
                         <img src="/__qrcode.png"/><span>Delete</span>
+                      </a> 
+                      <a href="javascript:void(0)" onclick="showEditor(this, '{{.Name}}')">
+                        <img src="/__codemirror.png"/><span>Edit</span>
                       </a> 
                     </div>
                   </div>
@@ -105,6 +110,41 @@
   <script src="/__myscript.js"></script>
   <script src="/__custom-file-input.js"></script>
   <script src="/__sorttable.js"></script>
+
+  <!-- <div class="codemirror-overlay"> -->
+  
+
+  <!-- <div class="generic-overlay dark show">
+    <div class="video-frame">
+      <video controls autoplay loop>
+        <source src="march_1.mp4" type="">
+      </video>
+    </div>
+  </div> -->
+
+  <!-- <div class="generic-overlay dark show">
+    <div class="barcode-frame">
+      <img src="https://api.qrserver.com/v1/create-qr-code/?size=500x500&data=http://localhost/./leftImage_2019-04-09_07:52:03_000369.png">
+    </div>
+  </div> -->
+
+  <div class="generic-overlay dark hide" id="overlay" onclick="hideOverlay(event)">
+    <div class="codemirror-frame">
+      <form><textarea id="code-mirror" name="code"></textarea></form>
+      <button class="btn btn-danger btn-big" onclick="" closer> Закрыть </button>
+      <button class="btn btn-success btn-big" onclick="saveData()" closer> Сохранить </button>
+    </div>
+  </div>
+
+  <!-- <div class="codemirror-overlay hide" onclick="hideEditor()">
+    <form><textarea id="code-mirror" name="code"></textarea></form>
+    <button class="btn btn-success" onclick="saveData()"> Save </button>
+  </div> -->
+  <script>
+    var editor = CodeMirror.fromTextArea(document.getElementById("code-mirror"), {
+      lineNumbers: true,
+    });
+  </script>
 
   <div class="barcode-overlay hide" onclick="hideImage()">
     <div class="barcode-frame">
