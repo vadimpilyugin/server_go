@@ -242,6 +242,15 @@ function showEditor (thisEl, path) {
   fileToEdit = path;
 }
 
+function showEditorByLink (ev, path) {
+  ev.preventDefault();
+  let overlay = document.querySelector("#overlay");
+  overlay.classList.remove('hide');
+  overlay.classList.add('show');
+  loadData(path);
+  fileToEdit = path;
+}
+
 function hideEditor () {
   let overlay = document.querySelector(".codemirror-overlay");
   overlay.classList.remove('show');

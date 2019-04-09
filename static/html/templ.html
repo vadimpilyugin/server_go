@@ -64,6 +64,8 @@
               <td class="indexcolname" sorttable_customkey='{{.Name}}'>
                 {{if .IsViewable}}
                 <a href="{{.Url}}" onclick="showVideo(event, '{{.Url}}')">{{.Name}}</a>
+                {{else if .IsEditable}}
+                <a href="{{.Url}}" onclick="showEditorByLink(event, '{{.Name}}')">{{.Name}}</a>
                 {{else}}
                 <a href="{{.Url}}">{{.Name}}</a>
                 {{end}}

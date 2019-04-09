@@ -36,6 +36,7 @@ type Elem struct {
 	IsParent    bool
 	Icon        string
 	IsViewable  bool
+	IsEditable  bool
 	ListNo int
 }
 
@@ -145,6 +146,10 @@ func isViewable(ext string) bool {
 	return ext == ".webm" || ext == ".mp4" || ext == ".mkv" || ext == ".ogg"
 }
 
+func isEditable(ext string) bool {
+	return ext == ".txt" || ext == ".conf" || ext == ".json" || ext == ".yaml"
+}
+
 func toDirectory(dirs []os.FileInfo, name string, cookie string) Directory {
 	readMimeMap()
 
@@ -207,6 +212,7 @@ func toDirectory(dirs []os.FileInfo, name string, cookie string) Directory {
 				HrSize:      hrSize(x.Size()),
 				Icon:        fnToIcon(x, name),
 				IsViewable:  isViewable(path.Ext(x.Name())),
+				IsEditable:  isEditable(path.Ext(x.Name())),
 				ListNo: listNo,
 			}
 		}
