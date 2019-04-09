@@ -190,6 +190,7 @@ function videoLeave () {
 function loadData(path) {
   var request = new XMLHttpRequest();
   request.open('GET', path, true);
+  request.setRequestHeader("X-Codemirror", "codemirror")
 
   request.onload = function() {
     if (request.status >= 200 && request.status < 400) {

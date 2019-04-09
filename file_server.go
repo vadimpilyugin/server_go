@@ -33,6 +33,10 @@ func serveFile(w http.ResponseWriter, r *http.Request, fs http.Dir, name string)
 		}
 	}
 
+	if _,found := r.Header["X-Codemirror"]; found {
+		w.Header().Set("Cache-Control", "no-store")
+	}
+
 	var cookie string
 	var err error
 	if config.Auth.UseAuth {
