@@ -146,8 +146,9 @@ func isViewable(ext string) bool {
 	return ext == ".webm" || ext == ".mp4" || ext == ".mkv" || ext == ".ogg"
 }
 
-func isEditable(ext string) bool {
-	return ext == ".txt" || ext == ".conf" || ext == ".json" || ext == ".yaml"
+func isEditable(ext string, icon string) bool {
+	return ext == ".txt" || ext == ".conf" || ext == ".json" || 
+		ext == ".yaml" || ext == ".yml" || icon == "text.svg"
 }
 
 func toDirectory(dirs []os.FileInfo, name string, cookie string) Directory {
@@ -212,7 +213,7 @@ func toDirectory(dirs []os.FileInfo, name string, cookie string) Directory {
 				HrSize:      hrSize(x.Size()),
 				Icon:        fnToIcon(x, name),
 				IsViewable:  isViewable(path.Ext(x.Name())),
-				IsEditable:  isEditable(path.Ext(x.Name())),
+				IsEditable:  isEditable(path.Ext(x.Name()), fnToIcon(x, name)),
 				ListNo: listNo,
 			}
 		}
