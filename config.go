@@ -1,7 +1,7 @@
 package main
 
 import (
-	"debug_print_go"
+	"github.com/vadimpilyugin/debug_print_go"
 	"github.com/go-ini/ini"
 )
 

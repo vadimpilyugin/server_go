@@ -2,7 +2,7 @@ package main
 
 import (
 	"bytes"
-	"debug_print_go"
+	"github.com/vadimpilyugin/debug_print_go"
 	"fmt"
 	"io"
 	"net/http"

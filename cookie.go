@@ -3,7 +3,7 @@ package main
 import (
 	"bytes"
 	"crypto/sha256"
-	"debug_print_go"
+	"github.com/vadimpilyugin/debug_print_go"
 	"errors"
 	"fmt"
 	"math/rand"

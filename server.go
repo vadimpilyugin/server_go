@@ -2,7 +2,7 @@ package main
 
 import (
 	"crypto/tls"
-	"debug_print_go"
+	"github.com/vadimpilyugin/debug_print_go"
 	"net/http"
 )
 

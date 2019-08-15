@@ -2,7 +2,7 @@ package main
 
 import (
 	"bufio"
-	"debug_print_go"
+	"github.com/vadimpilyugin/debug_print_go"
 	"fmt"
 	"github.com/jehiah/go-strftime"
 	"io"
