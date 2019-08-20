@@ -2,8 +2,10 @@ package main
 
 import (
 	"crypto/tls"
-	"github.com/vadimpilyugin/debug_print_go"
+	"flag"
 	"net/http"
+
+	printer "github.com/vadimpilyugin/debug_print_go"
 )
 
 func redirect(w http.ResponseWriter, req *http.Request) {
@@ -17,6 +19,17 @@ func redirect(w http.ResponseWriter, req *http.Request) {
 }
 
 func main() {
+	addr := flag.String("addr", config.ServerIp, "Server address")
+	port := flag.String("port", config.ServerPort, "Server port")
+	useSSL := flag.Bool("use-ssl", config.UseSSL, "Use SSL?")
+	redirectHTTP := flag.Bool("redirect-http", config.RedirectHTTP, "Redirect HTTP?")
+	flag.Parse()
+
+	config.ServerPort = *port
+	config.ServerIp = *addr
+	config.UseSSL = *useSSL
+	config.RedirectHTTP = *redirectHTTP
+
 	printer.Debug("", config.Internal.ServerSoftware, map[string]string{
 		"Port": config.Network.ServerPort,
 		"IP":   config.Network.ServerIp,

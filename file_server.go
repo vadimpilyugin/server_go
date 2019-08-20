@@ -2,25 +2,68 @@ package main
 
 import (
 	"bytes"
-	"github.com/vadimpilyugin/debug_print_go"
 	"fmt"
 	"io"
 	"net/http"
 	"os"
 	"path"
+	"path/filepath"
+	"regexp"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
+
+	printer "github.com/vadimpilyugin/debug_print_go"
 )
 
 const (
-	PERM_ALL       = 0644
-	MODE_WRITE     = os.O_CREATE | os.O_WRONLY | os.O_TRUNC
+	PERM_ALL   = 0644
+	MODE_WRITE = os.O_CREATE | os.O_WRONLY | os.O_TRUNC
 )
+
+var fnRepeat = map[string]int{}
 
 var serverStartTime time.Time = time.Now()
 
 const fileField = "file"
+
+func copyNo(init string) (string, int) {
+	ext := filepath.Ext(init)
+	init = init[:len(init)-len(ext)]
+	ar := regexp.MustCompile(`(.*)\((\d+)\)$`).FindStringSubmatch(init)
+	if ar == nil {
+		return init, 0
+	}
+	num, err := strconv.Atoi(ar[2])
+	if err != nil {
+		fmt.Printf("Could not convert %s to num: %v\n", ar[2], err)
+		return init, 0
+	}
+	return ar[1], num
+}
+
+func saveAs(init string, dir string) string {
+	if _,found := fnRepeat[init]; found {
+		no := fnRepeat[init]
+		prefix, _ := copyNo(init)
+		ext := filepath.Ext(init)
+		init = fmt.Sprintf("%s(%d)%s", prefix, no+1, ext)
+	}
+	for {
+		if _, err := os.Stat(filepath.Join(dir, init)); os.IsNotExist(err) {
+			fmt.Printf("Checking filename '%s': ", init)
+			fmt.Printf("Free!\n")
+			break
+		} else {
+			prefix, no := copyNo(init)
+			ext := filepath.Ext(init)
+			init = fmt.Sprintf("%s(%d)%s", prefix, no+1, ext)
+			fnRepeat[prefix+ext] = no+1
+		}
+	}
+	return init
+}
 
 // name is '/'-separated, not filepath.Separator.
 func serveFile(w http.ResponseWriter, r *http.Request, fs http.Dir, name string) {
@@ -33,7 +76,7 @@ func serveFile(w http.ResponseWriter, r *http.Request, fs http.Dir, name string)
 		}
 	}
 
-	if _,found := r.Header["X-Codemirror"]; found {
+	if _, found := r.Header["X-Codemirror"]; found {
 		w.Header().Set("Cache-Control", "no-store")
 	}
 
@@ -90,29 +133,23 @@ func serveFile(w http.ResponseWriter, r *http.Request, fs http.Dir, name string)
 			for v := range r.MultipartForm.File[fileField] {
 				fileHeader := r.MultipartForm.File[fileField][v]
 				fn := fileHeader.Filename
-				path := path.Clean(string(fs) + name + "/" + fn)
+
+				dir := filepath.Join(string(fs), name)
 				duration := time.Since(postStarted)
 
-				for {
-					file, err := os.Open(path)
-					exists := err == nil
-					if exists && !config.DoOverwrite {
-						file.Close()
-						path = path + "(1)"
-					} else {
-						speed := int64(float64(fileHeader.Size) / duration.Seconds())
-						printer.Debug("", "File Upload", map[string]string{
-							"Filename":      fn,
-							"Absolute path": path,
-							"File size":     hrSize(fileHeader.Size),
-							"Duration":      fmt.Sprintf("%v", duration),
-							"Speed":         hrSize(speed) + "/с",
-						})
-						break
-					}
-				}
+				fn = saveAs(fn, dir)
+				filePath := filepath.Join(dir, fn)
 
-				copyTo, err := os.OpenFile(path, MODE_WRITE, PERM_ALL)
+				speed := int64(float64(fileHeader.Size) / duration.Seconds())
+				printer.Debug("", "File Upload", map[string]string{
+					"Filename":      fn,
+					"Absolute path": filePath,
+					"File size":     hrSize(fileHeader.Size),
+					"Duration":      fmt.Sprintf("%v", duration),
+					"Speed":         hrSize(speed) + "/с",
+				})
+
+				copyTo, err := os.OpenFile(filePath, MODE_WRITE, PERM_ALL)
 				if err != nil {
 					printer.Fatal(err)
 				}

@@ -1,15 +1,15 @@
 package main
 
 import (
-	"github.com/vadimpilyugin/debug_print_go"
 	"github.com/go-ini/ini"
+	printer "github.com/vadimpilyugin/debug_print_go"
 )
 
 type Internal struct {
 	RootDir        string `ini:"root_dir"`
 	ServerSoftware string `ini:"server_software"`
 	Hostname       string `ini:"hostname"`
-	DoOverwrite       bool `ini:"overwrite"`
+	DoOverwrite    bool   `ini:"overwrite"`
 }
 
 type Network struct {
