@@ -26,7 +26,6 @@
         <thead>
           <tr class="indexhead">
             <th class="indexcolicon">
-              <!-- <img src="/__blank.svg" alt="[ICO]" /> -->
             </th>
             <th class="indexcolname">
               <a href="#">Name</a>
@@ -88,6 +87,11 @@
                       <a href="javascript:void(0)" onclick="showEditor(this, '{{.Name}}')">
                         <img src="/__codemirror.png"/><span>Edit</span>
                       </a> 
+                      {{if .IsSegmentable}}
+                      <a href="javascript:void(0)" onclick="generateSegmentation(this, '{{.Name}}')">
+                        <img src="/__segmentation.png"/><span>Edit</span>
+                      </a> 
+                      {{end}}
                     </div>
                   </div>
                   {{end}}

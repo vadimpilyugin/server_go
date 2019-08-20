@@ -9,6 +9,8 @@ BINARY_UNIX=$(BINARY_NAME)_unix
 all: $(BINARY_NAME)
 $(BINARY_NAME): *.go
 	$(GOBUILD) -o $(BINARY_NAME) -v
+server_arm: *.go
+	GOOS=linux GOARCH=arm64 $(GOBUILD) -o $(BINARY_NAME) -v
 clean: 
 	$(GOCLEAN)
 	rm -f $(BINARY_NAME)
