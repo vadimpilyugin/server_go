@@ -19,12 +19,14 @@ func redirect(w http.ResponseWriter, req *http.Request) {
 }
 
 func main() {
+	home := flag.String("home", config.RootDir, "Home directory")
 	addr := flag.String("addr", config.ServerIp, "Server address")
 	port := flag.String("port", config.ServerPort, "Server port")
 	useSSL := flag.Bool("use-ssl", config.UseSSL, "Use SSL?")
 	redirectHTTP := flag.Bool("redirect-http", config.RedirectHTTP, "Redirect HTTP?")
 	flag.Parse()
 
+	config.RootDir = *home
 	config.ServerPort = *port
 	config.ServerIp = *addr
 	config.UseSSL = *useSSL
