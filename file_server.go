@@ -22,7 +22,12 @@ const (
 	MODE_WRITE = os.O_CREATE | os.O_WRONLY | os.O_TRUNC
 )
 
-var fnRepeat = map[string]int{}
+type FnRepeatSt struct {
+	RepeatNo int
+	LastCheck int64
+}
+
+var fnRepeat = map[string]*FnRepeatSt{}
 
 var serverStartTime time.Time = time.Now()
 
@@ -44,11 +49,16 @@ func copyNo(init string) (string, int) {
 }
 
 func saveAs(init string, dir string) string {
-	if _,found := fnRepeat[init]; found {
-		no := fnRepeat[init]
-		prefix, _ := copyNo(init)
-		ext := filepath.Ext(init)
-		init = fmt.Sprintf("%s(%d)%s", prefix, no+1, ext)
+	filePath := path.Join(dir,init)
+	if _,found := fnRepeat[filePath]; found {
+		if time.Now().Unix() - fnRepeat[filePath].LastCheck <= 600 {
+			no := fnRepeat[filePath].RepeatNo
+			prefix, _ := copyNo(init)
+			ext := filepath.Ext(init)
+			init = fmt.Sprintf("%s(%d)%s", prefix, no+1, ext)
+		} else {
+			delete(fnRepeat, init)
+		}
 	}
 	for {
 		if _, err := os.Stat(filepath.Join(dir, init)); os.IsNotExist(err) {
@@ -59,7 +69,7 @@ func saveAs(init string, dir string) string {
 			prefix, no := copyNo(init)
 			ext := filepath.Ext(init)
 			init = fmt.Sprintf("%s(%d)%s", prefix, no+1, ext)
-			fnRepeat[prefix+ext] = no+1
+			fnRepeat[path.Join(dir,prefix+ext)] = &FnRepeatSt{no+1,time.Now().Unix()}
 		}
 	}
 	return init
