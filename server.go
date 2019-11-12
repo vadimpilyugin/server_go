@@ -16,7 +16,12 @@ func redirect(w http.ResponseWriter, req *http.Request) {
 	http.Redirect(w, req, target, http.StatusFound)
 }
 
+var (
+	AllowListing bool = false
+)
+
 func main() {
+	AllowListing = config.AllowListing
 	printer.Debug("", config.Internal.ServerSoftware, map[string]string{
 		"Port": config.Network.ServerPort,
 		"IP":   config.Network.ServerIp,
