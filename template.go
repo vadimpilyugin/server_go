@@ -2,9 +2,7 @@ package main
 
 import (
 	"bufio"
-	"debug_print_go"
 	"fmt"
-	"github.com/jehiah/go-strftime"
 	"io"
 	"io/ioutil"
 	"mime"
@@ -16,6 +14,9 @@ import (
 	"strings"
 	"text/template"
 	"time"
+
+	"github.com/jehiah/go-strftime"
+	printer "github.com/vadimpilyugin/debug_print_go"
 )
 
 type Directory struct {
@@ -148,7 +149,7 @@ func isViewable(ext string) bool {
 }
 
 func isEditable(ext string, icon string) bool {
-	return ext == ".txt" || ext == ".conf" || ext == ".json" || 
+	return ext == ".txt" || ext == ".conf" || ext == ".json" ||
 		ext == ".yaml" || ext == ".yml" || icon == "text.svg"
 }
 
@@ -183,7 +184,7 @@ func toDirectory(dirs []os.FileInfo, name string, cookie string) Directory {
 			HrSize:      noInfo,
 			IsParent:    true,
 			Icon:        "folder-home.svg",
-			ListNo: listNo,
+			ListNo:      listNo,
 		})
 		listNo++
 	}
@@ -200,7 +201,7 @@ func toDirectory(dirs []os.FileInfo, name string, cookie string) Directory {
 				HrModifDate: hrModifDate(x.ModTime()),
 				HrSize:      noInfo,
 				Icon:        "folder.svg",
-				ListNo: listNo,
+				ListNo:      listNo,
 			}
 		} else {
 			elem_url := urlEscape(x.Name())
@@ -220,7 +221,7 @@ func toDirectory(dirs []os.FileInfo, name string, cookie string) Directory {
 				IsViewable:  isViewable(path.Ext(x.Name())),
 				IsEditable:  isEditable(path.Ext(x.Name()), fnToIcon(x, name)),
 				IsSegmentable: isSegmentable(path.Ext(x.Name())),
-				ListNo: listNo,
+				ListNo:      listNo,
 			}
 		}
 
@@ -232,7 +233,7 @@ func toDirectory(dirs []os.FileInfo, name string, cookie string) Directory {
 
 func hrModifDate(modDate time.Time) string {
 	now := time.Now()
-	yesterday := now.Hour() * 3600 + now.Minute() * 60 + now.Second()
+	yesterday := now.Hour()*3600 + now.Minute()*60 + now.Second()
 	const Week = 7 * 24 * 3600 // seconds
 	timeElapsed := now.Sub(modDate).Seconds()
 

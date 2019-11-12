@@ -1,9 +1,10 @@
 package main
 
 import (
-	"debug_print_go"
 	"io/ioutil"
 	"path"
+
+	printer "github.com/vadimpilyugin/debug_print_go"
 )
 
 var Resources map[string]string

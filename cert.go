@@ -2,7 +2,8 @@ package main
 
 import (
 	"crypto/tls"
-	"debug_print_go"
+
+	printer "github.com/vadimpilyugin/debug_print_go"
 )
 
 func loadCert() tls.Certificate {
