@@ -23,12 +23,14 @@ func main() {
 	addr := flag.String("addr", config.ServerIp, "Server address")
 	port := flag.String("port", config.ServerPort, "Server port")
 	useSSL := flag.Bool("use-ssl", config.UseSSL, "Use SSL?")
+	useAuth := flag.Bool("auth", config.UseAuth, "Use authentication?")
 	redirectHTTP := flag.Bool("redirect-http", config.RedirectHTTP, "Redirect HTTP?")
 	flag.Parse()
 
 	config.RootDir = *home
 	config.ServerPort = *port
 	config.ServerIp = *addr
+	config.UseAuth = *useAuth
 	config.UseSSL = *useSSL
 	config.RedirectHTTP = *redirectHTTP
 
