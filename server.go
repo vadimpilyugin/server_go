@@ -20,6 +20,7 @@ func redirect(w http.ResponseWriter, req *http.Request) {
 
 var (
 	AllowListing bool = false
+	AllowGet bool = false
 )
 
 func main() {
@@ -29,10 +30,12 @@ func main() {
 	useSSL := flag.Bool("use-ssl", config.UseSSL, "Use SSL?")
 	useAuth := flag.Bool("auth", config.UseAuth, "Use authentication?")
 	allowListing := flag.Bool("listing", config.AllowListing, "Allow listing?")
+	allowGet := flag.Bool("allow-get", config.AllowGet, "Allow GET requests?")
 	redirectHTTP := flag.Bool("redirect-http", config.RedirectHTTP, "Redirect HTTP?")
 	flag.Parse()
 
 	config.AllowListing = *allowListing
+	config.AllowGet = *allowGet
 	config.RootDir = *home
 	config.ServerPort = *port
 	config.ServerIp = *addr
@@ -41,6 +44,7 @@ func main() {
 	config.RedirectHTTP = *redirectHTTP
 
 	AllowListing = config.AllowListing
+	AllowGet = config.AllowGet
 
 	printer.Debug("", config.Internal.ServerSoftware, map[string]string{
 		"Port": config.Network.ServerPort,

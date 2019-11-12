@@ -30,6 +30,7 @@ type Auth struct {
 	Username string `ini:"username"`
 	Password string `ini:"password"`
 	AllowListing bool `ini:"allow_listing"`
+	AllowGet bool `ini:"allow_get"`
 }
 
 type Static struct {

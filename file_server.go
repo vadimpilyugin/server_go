@@ -78,6 +78,11 @@ func saveAs(init string, dir string) string {
 // name is '/'-separated, not filepath.Separator.
 func serveFile(w http.ResponseWriter, r *http.Request, fs http.Dir, name string) {
 
+	if r.Method == http.MethodGet && !AllowGet {
+		http.Error(w, "400 Bad Request", http.StatusBadRequest)
+		return
+	}
+
 	for x, path := range Resources {
 		if x == name {
 			printer.Note(name, "Static file!")
@@ -175,17 +180,22 @@ func serveFile(w http.ResponseWriter, r *http.Request, fs http.Dir, name string)
 			}
 			localRedirect(w, r, "./")
 			return
-		}
-
-		buf := new(bytes.Buffer)
-		maxModtime, err := dirList(buf, f, name, cookie)
-		if err != nil {
-			printer.Error(err)
-			http.Error(w, "Error reading directory", http.StatusInternalServerError)
+		} else if AllowListing {
+			buf := new(bytes.Buffer)
+			maxModtime, err := dirList(buf, f, name, cookie)
+			if err != nil {
+				printer.Error(err)
+				http.Error(w, "Error reading directory", http.StatusInternalServerError)
+				return
+			}
+			w.Header().Set("Content-Type", "text/html; charset=utf-8")
+			http.ServeContent(w, r, d.Name(), maxModtime, bytes.NewReader(buf.Bytes()))
 			return
 		}
-		w.Header().Set("Content-Type", "text/html; charset=utf-8")
-		http.ServeContent(w, r, d.Name(), maxModtime, bytes.NewReader(buf.Bytes()))
+
+		msg, code := "empty", http.StatusOK
+		http.Error(w, msg, code)
+
 	} else {
 		if r.Method == "DELETE" {
 			err := os.Remove(path.Clean(string(fs) + name))
@@ -195,14 +205,10 @@ func serveFile(w http.ResponseWriter, r *http.Request, fs http.Dir, name string)
 				http.Error(w, msg, code)
 				return
 			}
-			// localRedirect(w, r, "../")
 			w.WriteHeader(http.StatusOK)
-		} else if AllowListing {
-			http.ServeContent(w, r, d.Name(), d.ModTime(), f)
 			return
 		}
-		msg, code := "empty", http.StatusOK
-		http.Error(w, msg, code)
+		http.ServeContent(w, r, d.Name(), d.ModTime(), f)
 	}
 }
 
