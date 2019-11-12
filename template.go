@@ -38,7 +38,8 @@ type Elem struct {
 	Icon        string
 	IsViewable  bool
 	IsEditable  bool
-	ListNo      int
+	IsSegmentable bool
+	ListNo int
 }
 
 const (
@@ -152,6 +153,10 @@ func isEditable(ext string, icon string) bool {
 		ext == ".yaml" || ext == ".yml" || icon == "text.svg"
 }
 
+func isSegmentable(ext string) bool {
+	return ext == ".png" || ext == ".jpg"
+}
+
 func toDirectory(dirs []os.FileInfo, name string, cookie string) Directory {
 	readMimeMap()
 
@@ -215,6 +220,7 @@ func toDirectory(dirs []os.FileInfo, name string, cookie string) Directory {
 				Icon:        fnToIcon(x, name),
 				IsViewable:  isViewable(path.Ext(x.Name())),
 				IsEditable:  isEditable(path.Ext(x.Name()), fnToIcon(x, name)),
+				IsSegmentable: isSegmentable(path.Ext(x.Name())),
 				ListNo:      listNo,
 			}
 		}

@@ -42,6 +42,19 @@ function generateQrCode (el, s) {
   return true;
 }
 
+function generateSegmentation (el, s) {
+  let img = document.querySelector("#barcodeImg");
+  let data = window.location+s;
+  data = data.replace("#", "");
+  data = data.replace("localhost", "192.168.0.36");
+  img.src = `http://192.168.0.221:8080/segment/link?url=${data}&neural_network=nn-selhoz&colorize=true`;
+  showImage();
+  lastHovered = el.parentElement.parentElement;
+  lastHovered.classList.remove("hashover");
+  console.log(`generated segmentation image for data='${data}'`);
+  return true;
+}
+
 function hideImage () {
   if (isImageShown()) {
     let overlay = document.querySelector(".barcode-overlay");

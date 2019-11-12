@@ -29,6 +29,7 @@ type Auth struct {
 	UseAuth  bool   `ini:"use_auth"`
 	Username string `ini:"username"`
 	Password string `ini:"password"`
+	AllowListing bool `ini:"allow_listing"`
 }
 
 type Static struct {

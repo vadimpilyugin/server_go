@@ -335,8 +335,8 @@ label {
 }
 
 .generic-overlay > .barcode-frame {
-  width: 500px;
-  height: 500px;
+  /*width: 500px;
+  height: 500px;*/
   display: flex;
   /*justify-content: */
   background: #dddddd;
@@ -388,13 +388,16 @@ label {
 }
 
 .barcode-overlay > .barcode-frame {
-  width: 500px;
-  height: 500px;
+  /*width: 500px;
+  height: 500px;*/
   background: #dddddd;
 }
 .barcode-overlay > .barcode-frame > img {
-  width: 500px;
-  height: 500px;
+  /*width: 500px;
+  height: 500px;*/
+  width: 100%;
+  height: 100%;
+  display: block;
   border: 5px solid #fff;
 }
 

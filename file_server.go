@@ -197,11 +197,13 @@ func serveFile(w http.ResponseWriter, r *http.Request, fs http.Dir, name string)
 			}
 			// localRedirect(w, r, "../")
 			w.WriteHeader(http.StatusOK)
-		} else {
+		} else if AllowListing {
 			http.ServeContent(w, r, d.Name(), d.ModTime(), f)
+			return
 		}
+		msg, code := "empty", http.StatusOK
+		http.Error(w, msg, code)
 	}
-	return
 }
 
 // localRedirect gives a Moved Permanently response.

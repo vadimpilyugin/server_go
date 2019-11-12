@@ -18,7 +18,12 @@ func redirect(w http.ResponseWriter, req *http.Request) {
 	http.Redirect(w, req, target, http.StatusFound)
 }
 
+var (
+	AllowListing bool = false
+)
+
 func main() {
+	AllowListing = config.AllowListing
 	home := flag.String("home", config.RootDir, "Home directory")
 	addr := flag.String("addr", config.ServerIp, "Server address")
 	port := flag.String("port", config.ServerPort, "Server port")
