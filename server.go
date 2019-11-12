@@ -23,21 +23,24 @@ var (
 )
 
 func main() {
-	AllowListing = config.AllowListing
 	home := flag.String("home", config.RootDir, "Home directory")
 	addr := flag.String("addr", config.ServerIp, "Server address")
 	port := flag.String("port", config.ServerPort, "Server port")
 	useSSL := flag.Bool("use-ssl", config.UseSSL, "Use SSL?")
 	useAuth := flag.Bool("auth", config.UseAuth, "Use authentication?")
+	allowListing := flag.Bool("listing", config.AllowListing, "Allow listing?")
 	redirectHTTP := flag.Bool("redirect-http", config.RedirectHTTP, "Redirect HTTP?")
 	flag.Parse()
 
+	config.AllowListing = *allowListing
 	config.RootDir = *home
 	config.ServerPort = *port
 	config.ServerIp = *addr
 	config.UseAuth = *useAuth
 	config.UseSSL = *useSSL
 	config.RedirectHTTP = *redirectHTTP
+
+	AllowListing = config.AllowListing
 
 	printer.Debug("", config.Internal.ServerSoftware, map[string]string{
 		"Port": config.Network.ServerPort,
