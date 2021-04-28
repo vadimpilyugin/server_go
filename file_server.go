@@ -3,29 +3,89 @@ package main
 import (
 	"bytes"
 	"fmt"
-	"github.com/vadimpilyugin/debug_print_go"
 	"io"
+	"log"
 	"net/http"
 	"os"
 	"path"
+	"path/filepath"
+	"regexp"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
+
+	printer "github.com/vadimpilyugin/debug_print_go"
 )
+
+const (
+	PERM_ALL   = 0644
+	MODE_WRITE = os.O_CREATE | os.O_WRONLY | os.O_TRUNC
+)
+
+type FnRepeatSt struct {
+	RepeatNo  int
+	LastCheck int64
+}
+
+var fnRepeat = map[string]*FnRepeatSt{}
 
 var serverStartTime time.Time = time.Now()
 
 const fileField = "file"
 
+func copyNo(init string) (string, int) {
+	ext := filepath.Ext(init)
+	init = init[:len(init)-len(ext)]
+	ar := regexp.MustCompile(`(.*)\((\d+)\)$`).FindStringSubmatch(init)
+	if ar == nil {
+		return init, 0
+	}
+	num, err := strconv.Atoi(ar[2])
+	if err != nil {
+		fmt.Printf("Could not convert %s to num: %v\n", ar[2], err)
+		return init, 0
+	}
+	return ar[1], num
+}
+
+func saveAs(init string, dir string) string {
+	filePath := path.Join(dir, init)
+	if _, found := fnRepeat[filePath]; found {
+		if time.Now().Unix()-fnRepeat[filePath].LastCheck <= 600 {
+			no := fnRepeat[filePath].RepeatNo
+			prefix, _ := copyNo(init)
+			ext := filepath.Ext(init)
+			init = fmt.Sprintf("%s(%d)%s", prefix, no+1, ext)
+		} else {
+			delete(fnRepeat, init)
+		}
+	}
+	for {
+		if _, err := os.Stat(filepath.Join(dir, init)); os.IsNotExist(err) {
+			fmt.Printf("Checking filename '%s': ", init)
+			fmt.Printf("Free!\n")
+			break
+		} else {
+			prefix, no := copyNo(init)
+			ext := filepath.Ext(init)
+			init = fmt.Sprintf("%s(%d)%s", prefix, no+1, ext)
+			fnRepeat[path.Join(dir, prefix+ext)] = &FnRepeatSt{no + 1, time.Now().Unix()}
+		}
+	}
+	return init
+}
+
 // name is '/'-separated, not filepath.Separator.
 func serveFile(w http.ResponseWriter, r *http.Request, fs http.Dir, name string) {
 
-	for x, path := range Resources {
-		if x == name {
-			printer.Note(name, "Static file!")
-			http.ServeFile(w, r, path)
-			return
-		}
+	if r.Method == http.MethodGet && !AllowGet {
+		http.Error(w, "400 Bad Request", http.StatusBadRequest)
+		return
+	}
+
+	if _, found := r.Header["X-Codemirror"]; found {
+		w.Header().Set("Cache-Control", "no-store")
 	}
 
 	var cookie string
@@ -70,7 +130,7 @@ func serveFile(w http.ResponseWriter, r *http.Request, fs http.Dir, name string)
 
 	if d.IsDir() {
 		if r.Method == "POST" {
-      postStarted := time.Now()
+			postStarted := time.Now()
 			err := r.ParseMultipartForm(10 * mb)
 			if err != nil {
 				printer.Error(err)
@@ -81,55 +141,54 @@ func serveFile(w http.ResponseWriter, r *http.Request, fs http.Dir, name string)
 			for v := range r.MultipartForm.File[fileField] {
 				fileHeader := r.MultipartForm.File[fileField][v]
 				fn := fileHeader.Filename
-				path := path.Clean(string(fs) + name + "/" + fn)
-        duration := time.Since(postStarted)
 
-        for {
-          file, err := os.Open(path)
-          exists := err == nil
-					if exists {
-						file.Close()
-						path = path + "(1)"
-					} else {
-            speed := int64(float64(fileHeader.Size) / duration.Seconds())
-            printer.Debug("", "File Upload", map[string]string {
-              "Filename" : fn,
-              "Absolute path" : path,
-              "File size" : hrSize(fileHeader.Size),
-              "Duration" : fmt.Sprintf("%v", duration),
-              "Speed" : hrSize(speed) + "/с",
-            })
-						break
-					}
-				}
+				dir := filepath.Join(string(fs), name)
+				duration := time.Since(postStarted)
 
-				copyTo, err := os.Create(path)
+				fn = saveAs(fn, dir)
+				filePath := filepath.Join(dir, fn)
+
+				speed := int64(float64(fileHeader.Size) / duration.Seconds())
+				printer.Debug("", "File Upload", map[string]string{
+					"Filename":      fn,
+					"Absolute path": filePath,
+					"File size":     hrSize(fileHeader.Size),
+					"Duration":      fmt.Sprintf("%v", duration),
+					"Speed":         hrSize(speed) + "/с",
+				})
+
+				copyTo, err := os.OpenFile(filePath, MODE_WRITE, PERM_ALL)
 				if err != nil {
-					printer.Fatal(err)
+					printer.Fatal(err, "post request")
 				}
 				copyFrom, err := fileHeader.Open()
 				if err != nil {
-					printer.Fatal(err)
+					printer.Fatal(err, "post request")
 				}
 				io.Copy(copyTo, copyFrom)
 			}
 			err = r.MultipartForm.RemoveAll()
 			if err != nil {
 				printer.Error(err)
-      }
-      localRedirect(w, r, "./")
+			}
+			localRedirect(w, r, "./")
+			return
+		} else if AllowListing {
+			buf := new(bytes.Buffer)
+			maxModtime, err := dirList(buf, f, name, cookie)
+			if err != nil {
+				printer.Error(err)
+				http.Error(w, "Error reading directory", http.StatusInternalServerError)
+				return
+			}
+			w.Header().Set("Content-Type", "text/html; charset=utf-8")
+			http.ServeContent(w, r, d.Name(), maxModtime, bytes.NewReader(buf.Bytes()))
 			return
 		}
 
-		buf := new(bytes.Buffer)
-		maxModtime, err := dirList(buf, f, name, cookie)
-		if err != nil {
-			printer.Error(err)
-			http.Error(w, "Error reading directory", http.StatusInternalServerError)
-			return
-		}
-		w.Header().Set("Content-Type", "text/html; charset=utf-8")
-		http.ServeContent(w, r, d.Name(), maxModtime, bytes.NewReader(buf.Bytes()))
+		msg, code := "empty", http.StatusOK
+		http.Error(w, msg, code)
+
 	} else {
 		if r.Method == "DELETE" {
 			err := os.Remove(path.Clean(string(fs) + name))
@@ -139,13 +198,11 @@ func serveFile(w http.ResponseWriter, r *http.Request, fs http.Dir, name string)
 				http.Error(w, msg, code)
 				return
 			}
-			// localRedirect(w, r, "../")
 			w.WriteHeader(http.StatusOK)
-		} else {
-			http.ServeContent(w, r, d.Name(), d.ModTime(), f)
+			return
 		}
+		http.ServeContent(w, r, d.Name(), d.ModTime(), f)
 	}
-	return
 }
 
 // localRedirect gives a Moved Permanently response.
@@ -238,6 +295,8 @@ func (f *FileHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		upath = "/" + upath
 		r.URL.Path = upath
 	}
+
+	log.Printf("Upath: %s\n", upath)
 
 	serveFile(w, r, f.Root, path.Clean(upath))
 }

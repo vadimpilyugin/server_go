@@ -2,11 +2,12 @@ package main
 
 import (
 	"bufio"
+	"bytes"
+	"embed"
+	_ "embed"
 	"fmt"
-	"github.com/jehiah/go-strftime"
-	"github.com/vadimpilyugin/debug_print_go"
 	"io"
-	"io/ioutil"
+	"log"
 	"mime"
 	"net/http"
 	"net/url"
@@ -16,6 +17,9 @@ import (
 	"strings"
 	"text/template"
 	"time"
+
+	"github.com/jehiah/go-strftime"
+	printer "github.com/vadimpilyugin/debug_print_go"
 )
 
 type Directory struct {
@@ -36,6 +40,8 @@ type Elem struct {
 	IsParent    bool
 	Icon        string
 	IsViewable  bool
+	IsEditable  bool
+	ListNo      int
 }
 
 const (
@@ -60,26 +66,13 @@ func init() {
 var mapMimeToIcon map[string]string
 var lastModTime time.Time = time.Unix(0, 0)
 
+//go:embed mimeToIcons.txt
+var mimeData []byte
+
 func readMimeMap() {
-	file, err := os.Open(config.Static.MimeMap)
-	if err != nil {
-		printer.Fatal(err)
-	}
-	defer file.Close()
+	mapMimeToIcon := make(map[string]string)
 
-	stat, err := file.Stat()
-	if err != nil {
-		printer.Fatal(err)
-	}
-	currModTime := stat.ModTime()
-	if currModTime.Unix() == lastModTime.Unix() {
-		return
-	}
-	lastModTime = currModTime
-
-	mapMimeToIcon = make(map[string]string)
-
-	scanner := bufio.NewScanner(file)
+	scanner := bufio.NewScanner(bytes.NewBuffer(mimeData))
 	for scanner.Scan() {
 		line := scanner.Text()
 		ar := strings.Split(line, " ")
@@ -144,6 +137,11 @@ func isViewable(ext string) bool {
 	return ext == ".webm" || ext == ".mp4" || ext == ".mkv" || ext == ".ogg"
 }
 
+func isEditable(ext string, icon string) bool {
+	return ext == ".txt" || ext == ".conf" || ext == ".json" ||
+		ext == ".yaml" || ext == ".yml" || icon == "text.svg"
+}
+
 func toDirectory(dirs []os.FileInfo, name string, cookie string) Directory {
 	readMimeMap()
 
@@ -156,6 +154,9 @@ func toDirectory(dirs []os.FileInfo, name string, cookie string) Directory {
 			config.Network.ServerPort,
 		),
 	}
+
+	listNo := 0
+
 	if name != "/" {
 		d.Elements = append(d.Elements, Elem{
 			Name:        upName,
@@ -168,7 +169,9 @@ func toDirectory(dirs []os.FileInfo, name string, cookie string) Directory {
 			HrSize:      noInfo,
 			IsParent:    true,
 			Icon:        "folder-home.svg",
+			ListNo:      listNo,
 		})
+		listNo++
 	}
 	for _, x := range dirs {
 		var elem Elem
@@ -183,6 +186,7 @@ func toDirectory(dirs []os.FileInfo, name string, cookie string) Directory {
 				HrModifDate: hrModifDate(x.ModTime()),
 				HrSize:      noInfo,
 				Icon:        "folder.svg",
+				ListNo:      listNo,
 			}
 		} else {
 			elem_url := urlEscape(x.Name())
@@ -200,25 +204,29 @@ func toDirectory(dirs []os.FileInfo, name string, cookie string) Directory {
 				HrSize:      hrSize(x.Size()),
 				Icon:        fnToIcon(x, name),
 				IsViewable:  isViewable(path.Ext(x.Name())),
+				IsEditable:  isEditable(path.Ext(x.Name()), fnToIcon(x, name)),
+				ListNo:      listNo,
 			}
 		}
 
 		d.Elements = append(d.Elements, elem)
+		listNo++
 	}
 	return d
 }
 
-func hrModifDate(modif_date time.Time) string {
-	const Day = 24 * 3600
-	const Week = 7 * Day // seconds
-	elapsed_time := time.Now().Sub(modif_date).Seconds()
+func hrModifDate(modDate time.Time) string {
+	now := time.Now()
+	yesterday := now.Hour()*3600 + now.Minute()*60 + now.Second()
+	const Week = 7 * 24 * 3600 // seconds
+	timeElapsed := now.Sub(modDate).Seconds()
 
-	if elapsed_time > Week {
-		return strftime.Format("%a, %d %b %H:%M", modif_date)
-	} else if elapsed_time > Day {
-		return strftime.Format("%a, %H:%M", modif_date)
+	if timeElapsed > Week {
+		return strftime.Format("%a, %d %b %H:%M", modDate)
+	} else if timeElapsed > float64(yesterday) {
+		return strftime.Format("%a, %H:%M", modDate)
 	} else { // сегодня
-		return strftime.Format("%H:%M", modif_date)
+		return strftime.Format("%H:%M", modDate)
 	}
 }
 
@@ -269,15 +277,13 @@ func greater(b1, b2 bool) bool {
 func trueModTime(name string) time.Time {
 	maxModTime := serverStartTime
 	var files = []string{
-		config.Static.DirlistTempl,
-		config.Static.MimeMap,
 		path.Join(config.Internal.RootDir, "."+name),
 	}
 
 	for _, k := range files {
 		tmpStat, err := os.Stat(k)
 		if err != nil {
-			printer.Fatal(err)
+			printer.Fatal(err, "true mod name")
 		}
 		if tmpStat.ModTime().Unix() > maxModTime.Unix() {
 			maxModTime = tmpStat.ModTime()
@@ -285,6 +291,9 @@ func trueModTime(name string) time.Time {
 	}
 	return maxModTime
 }
+
+//go:embed templates/templ.html
+var dirlistTempl embed.FS
 
 func dirList(w io.Writer, f http.File, name string, cookie string) (time.Time, error) {
 	dirs, err := f.Readdir(-1)
@@ -300,15 +309,15 @@ func dirList(w io.Writer, f http.File, name string, cookie string) (time.Time, e
 	dirs = b
 
 	sort.Slice(dirs, func(i, j int) bool {
-		return dirs[j].ModTime().Unix() < dirs[i].ModTime().Unix()
+		return dirs[j].ModTime().UnixNano() < dirs[i].ModTime().UnixNano()
 	})
 	sort.SliceStable(dirs, func(i, j int) bool {
 		return greater(dirs[i].IsDir(), dirs[j].IsDir())
 	})
 
-	t, err := template.ParseFiles(config.Static.DirlistTempl)
+	t, err := template.ParseFS(dirlistTempl, "templates/templ.html")
 	if err != nil {
-		printer.Fatal(err)
+		log.Fatal("Cannot parse dilist template:", err)
 	}
 	p := toDirectory(dirs, name, cookie)
 	err = t.Execute(w, p)
@@ -318,10 +327,13 @@ func dirList(w io.Writer, f http.File, name string, cookie string) (time.Time, e
 	return trueModTime(name), nil
 }
 
+//go:embed templates/auth.html
+var authTempl embed.FS
+
 func generateAuthPage(w io.Writer) {
-	data, err := ioutil.ReadFile(config.Static.AuthTempl)
+	data, err := authTempl.ReadFile("templates/auth.html")
 	if err != nil {
-		printer.Fatal(err)
+		printer.Fatal(err, "auth template")
 	}
 	fmt.Fprintf(w, "%s", data)
 }

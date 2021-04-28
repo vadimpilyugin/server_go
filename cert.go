@@ -2,7 +2,8 @@ package main
 
 import (
 	"crypto/tls"
-	"github.com/vadimpilyugin/debug_print_go"
+
+	printer "github.com/vadimpilyugin/debug_print_go"
 )
 
 func loadCert() tls.Certificate {
@@ -11,7 +12,7 @@ func loadCert() tls.Certificate {
 		config.Openssl.KeyFile,
 	)
 	if err != nil {
-		printer.Fatal(err)
+		printer.Fatal(err, "cert file loader")
 	}
 	return cert
 }

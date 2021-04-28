@@ -5,11 +5,12 @@ import (
 	"crypto/sha256"
 	"errors"
 	"fmt"
-	"github.com/vadimpilyugin/debug_print_go"
 	"math/rand"
 	"net/http"
 	"sync"
 	"time"
+
+	printer "github.com/vadimpilyugin/debug_print_go"
 )
 
 const (

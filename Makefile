@@ -9,6 +9,10 @@ BINARY_UNIX=$(BINARY_NAME)_unix
 all: $(BINARY_NAME)
 $(BINARY_NAME): *.go
 	$(GOBUILD) -o $(BINARY_NAME) -v
+server_arm: *.go
+	GOOS=linux GOARCH=arm64 $(GOBUILD) -o $(BINARY_NAME) -v
+windows:
+	GOOS=windows GOARCH=amd64 $(GOBUILD) -o $(BINARY_NAME).exe -v
 clean: 
 	$(GOCLEAN)
 	rm -f $(BINARY_NAME)
@@ -17,7 +21,6 @@ run:
 	$(GOBUILD) -o $(BINARY_NAME) -v ./...
 	./$(BINARY_NAME)
 deps:
-	$(GOGET) github.com/vadimpilyugin/debug_print_go
 	$(GOGET) github.com/jehiah/go-strftime
 	$(GOGET) github.com/go-ini/ini
 
