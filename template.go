@@ -78,7 +78,7 @@ func readMimeMap() {
 		ar := strings.Split(line, " ")
 		icon := ar[0]
 		for _, v := range ar[1:] {
-			log.Printf("Mapping '%s' to icon '%s'\n", v, icon)
+			// log.Printf("Mapping '%s' to icon '%s'\n", v, icon)
 			mapMimeToIcon[v] = icon
 		}
 	}
