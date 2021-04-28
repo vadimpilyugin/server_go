@@ -5,6 +5,6 @@ server: *.go
 server_arm: *.go
 	GOOS=linux GOARCH=arm64 go build -o $@ -v
 server.exe:
-	GOOS=windows GOARCH=amd64 go build -o $@ -v
+	GOOS=windows GOARCH=amd64 go build -ldflags="-s -w" -o $@ -v
 clean:
 	rm -f server server.exe server_arm

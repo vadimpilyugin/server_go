@@ -70,7 +70,7 @@ var lastModTime time.Time = time.Unix(0, 0)
 var mimeData []byte
 
 func readMimeMap() {
-	mapMimeToIcon := make(map[string]string)
+	mapMimeToIcon = make(map[string]string)
 
 	scanner := bufio.NewScanner(bytes.NewBuffer(mimeData))
 	for scanner.Scan() {
@@ -78,6 +78,7 @@ func readMimeMap() {
 		ar := strings.Split(line, " ")
 		icon := ar[0]
 		for _, v := range ar[1:] {
+			log.Printf("Mapping '%s' to icon '%s'\n", v, icon)
 			mapMimeToIcon[v] = icon
 		}
 	}
@@ -92,6 +93,7 @@ func fnToIcon(info os.FileInfo, name string) string {
 
 	s := info.Name()
 	ext := path.Ext(s)
+	log.Printf("Path extension: %s\n", ext)
 	icon, found := mapMimeToIcon[ext]
 	if found {
 		return icon
