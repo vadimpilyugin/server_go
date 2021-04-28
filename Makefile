@@ -11,6 +11,8 @@ $(BINARY_NAME): *.go
 	$(GOBUILD) -o $(BINARY_NAME) -v
 server_arm: *.go
 	GOOS=linux GOARCH=arm64 $(GOBUILD) -o $(BINARY_NAME) -v
+windows:
+	GOOS=windows GOARCH=amd64 $(GOBUILD) -o $(BINARY_NAME).exe -v
 clean: 
 	$(GOCLEAN)
 	rm -f $(BINARY_NAME)

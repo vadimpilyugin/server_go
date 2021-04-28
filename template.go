@@ -2,9 +2,12 @@ package main
 
 import (
 	"bufio"
+	"bytes"
+	"embed"
+	_ "embed"
 	"fmt"
 	"io"
-	"io/ioutil"
+	"log"
 	"mime"
 	"net/http"
 	"net/url"
@@ -38,8 +41,7 @@ type Elem struct {
 	Icon        string
 	IsViewable  bool
 	IsEditable  bool
-	IsSegmentable bool
-	ListNo int
+	ListNo      int
 }
 
 const (
@@ -64,26 +66,13 @@ func init() {
 var mapMimeToIcon map[string]string
 var lastModTime time.Time = time.Unix(0, 0)
 
+//go:embed mimeToIcons.txt
+var mimeData []byte
+
 func readMimeMap() {
-	file, err := os.Open(config.Static.MimeMap)
-	if err != nil {
-		printer.Fatal(err)
-	}
-	defer file.Close()
+	mapMimeToIcon := make(map[string]string)
 
-	stat, err := file.Stat()
-	if err != nil {
-		printer.Fatal(err)
-	}
-	currModTime := stat.ModTime()
-	if currModTime.Unix() == lastModTime.Unix() {
-		return
-	}
-	lastModTime = currModTime
-
-	mapMimeToIcon = make(map[string]string)
-
-	scanner := bufio.NewScanner(file)
+	scanner := bufio.NewScanner(bytes.NewBuffer(mimeData))
 	for scanner.Scan() {
 		line := scanner.Text()
 		ar := strings.Split(line, " ")
@@ -153,10 +142,6 @@ func isEditable(ext string, icon string) bool {
 		ext == ".yaml" || ext == ".yml" || icon == "text.svg"
 }
 
-func isSegmentable(ext string) bool {
-	return ext == ".png" || ext == ".jpg"
-}
-
 func toDirectory(dirs []os.FileInfo, name string, cookie string) Directory {
 	readMimeMap()
 
@@ -220,7 +205,6 @@ func toDirectory(dirs []os.FileInfo, name string, cookie string) Directory {
 				Icon:        fnToIcon(x, name),
 				IsViewable:  isViewable(path.Ext(x.Name())),
 				IsEditable:  isEditable(path.Ext(x.Name()), fnToIcon(x, name)),
-				IsSegmentable: isSegmentable(path.Ext(x.Name())),
 				ListNo:      listNo,
 			}
 		}
@@ -293,15 +277,13 @@ func greater(b1, b2 bool) bool {
 func trueModTime(name string) time.Time {
 	maxModTime := serverStartTime
 	var files = []string{
-		config.Static.DirlistTempl,
-		config.Static.MimeMap,
 		path.Join(config.Internal.RootDir, "."+name),
 	}
 
 	for _, k := range files {
 		tmpStat, err := os.Stat(k)
 		if err != nil {
-			printer.Fatal(err)
+			printer.Fatal(err, "true mod name")
 		}
 		if tmpStat.ModTime().Unix() > maxModTime.Unix() {
 			maxModTime = tmpStat.ModTime()
@@ -309,6 +291,9 @@ func trueModTime(name string) time.Time {
 	}
 	return maxModTime
 }
+
+//go:embed templates/templ.html
+var dirlistTempl embed.FS
 
 func dirList(w io.Writer, f http.File, name string, cookie string) (time.Time, error) {
 	dirs, err := f.Readdir(-1)
@@ -330,9 +315,9 @@ func dirList(w io.Writer, f http.File, name string, cookie string) (time.Time, e
 		return greater(dirs[i].IsDir(), dirs[j].IsDir())
 	})
 
-	t, err := template.ParseFiles(config.Static.DirlistTempl)
+	t, err := template.ParseFS(dirlistTempl, "templates/templ.html")
 	if err != nil {
-		printer.Fatal(err)
+		log.Fatal("Cannot parse dilist template:", err)
 	}
 	p := toDirectory(dirs, name, cookie)
 	err = t.Execute(w, p)
@@ -342,10 +327,13 @@ func dirList(w io.Writer, f http.File, name string, cookie string) (time.Time, e
 	return trueModTime(name), nil
 }
 
+//go:embed templates/auth.html
+var authTempl embed.FS
+
 func generateAuthPage(w io.Writer) {
-	data, err := ioutil.ReadFile(config.Static.AuthTempl)
+	data, err := authTempl.ReadFile("templates/auth.html")
 	if err != nil {
-		printer.Fatal(err)
+		printer.Fatal(err, "auth template")
 	}
 	fmt.Fprintf(w, "%s", data)
 }

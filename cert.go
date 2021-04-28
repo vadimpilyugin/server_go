@@ -12,7 +12,7 @@ func loadCert() tls.Certificate {
 		config.Openssl.KeyFile,
 	)
 	if err != nil {
-		printer.Fatal(err)
+		printer.Fatal(err, "cert file loader")
 	}
 	return cert
 }

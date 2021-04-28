@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"os"
 	"path"
@@ -23,7 +24,7 @@ const (
 )
 
 type FnRepeatSt struct {
-	RepeatNo int
+	RepeatNo  int
 	LastCheck int64
 }
 
@@ -49,9 +50,9 @@ func copyNo(init string) (string, int) {
 }
 
 func saveAs(init string, dir string) string {
-	filePath := path.Join(dir,init)
-	if _,found := fnRepeat[filePath]; found {
-		if time.Now().Unix() - fnRepeat[filePath].LastCheck <= 600 {
+	filePath := path.Join(dir, init)
+	if _, found := fnRepeat[filePath]; found {
+		if time.Now().Unix()-fnRepeat[filePath].LastCheck <= 600 {
 			no := fnRepeat[filePath].RepeatNo
 			prefix, _ := copyNo(init)
 			ext := filepath.Ext(init)
@@ -69,7 +70,7 @@ func saveAs(init string, dir string) string {
 			prefix, no := copyNo(init)
 			ext := filepath.Ext(init)
 			init = fmt.Sprintf("%s(%d)%s", prefix, no+1, ext)
-			fnRepeat[path.Join(dir,prefix+ext)] = &FnRepeatSt{no+1,time.Now().Unix()}
+			fnRepeat[path.Join(dir, prefix+ext)] = &FnRepeatSt{no + 1, time.Now().Unix()}
 		}
 	}
 	return init
@@ -81,14 +82,6 @@ func serveFile(w http.ResponseWriter, r *http.Request, fs http.Dir, name string)
 	if r.Method == http.MethodGet && !AllowGet {
 		http.Error(w, "400 Bad Request", http.StatusBadRequest)
 		return
-	}
-
-	for x, path := range Resources {
-		if x == name {
-			printer.Note(name, "Static file!")
-			http.ServeFile(w, r, path)
-			return
-		}
 	}
 
 	if _, found := r.Header["X-Codemirror"]; found {
@@ -166,11 +159,11 @@ func serveFile(w http.ResponseWriter, r *http.Request, fs http.Dir, name string)
 
 				copyTo, err := os.OpenFile(filePath, MODE_WRITE, PERM_ALL)
 				if err != nil {
-					printer.Fatal(err)
+					printer.Fatal(err, "post request")
 				}
 				copyFrom, err := fileHeader.Open()
 				if err != nil {
-					printer.Fatal(err)
+					printer.Fatal(err, "post request")
 				}
 				io.Copy(copyTo, copyFrom)
 			}
@@ -302,6 +295,8 @@ func (f *FileHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		upath = "/" + upath
 		r.URL.Path = upath
 	}
+
+	log.Printf("Upath: %s\n", upath)
 
 	serveFile(w, r, f.Root, path.Clean(upath))
 }
