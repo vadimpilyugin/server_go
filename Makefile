@@ -1,30 +1,10 @@
-# Go parameters
-GOCMD=go
-GOBUILD=$(GOCMD) build
-GOCLEAN=$(GOCMD) clean
-GOGET=$(GOCMD) get
-BINARY_NAME=server
-BINARY_UNIX=$(BINARY_NAME)_unix
+all: server
 
-all: $(BINARY_NAME)
-$(BINARY_NAME): *.go
-	$(GOBUILD) -o $(BINARY_NAME) -v
+server: *.go
+	go build -o server -v
 server_arm: *.go
-	GOOS=linux GOARCH=arm64 $(GOBUILD) -o $(BINARY_NAME) -v
-windows:
-	GOOS=windows GOARCH=amd64 $(GOBUILD) -o $(BINARY_NAME).exe -v
-clean: 
-	$(GOCLEAN)
-	rm -f $(BINARY_NAME)
-	rm -f $(BINARY_UNIX)
-run:
-	$(GOBUILD) -o $(BINARY_NAME) -v ./...
-	./$(BINARY_NAME)
-deps:
-	$(GOGET) github.com/jehiah/go-strftime
-	$(GOGET) github.com/go-ini/ini
-
-
-# Cross compilation
-build-linux:
-	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 $(GOBUILD) -o $(BINARY_UNIX) -v
+	GOOS=linux GOARCH=arm64 go build -o $@ -v
+server.exe:
+	GOOS=windows GOARCH=amd64 go build -o $@ -v
+clean:
+	rm -f server server.exe server_arm
