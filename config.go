@@ -3,9 +3,9 @@ package main
 import (
 	"log"
 	"os"
+	_ "embed"
 
 	"github.com/go-ini/ini"
-	printer "github.com/vadimpilyugin/debug_print_go"
 )
 
 type Internal struct {
@@ -34,12 +34,7 @@ type Auth struct {
 	Password     string `ini:"password"`
 	AllowListing bool   `ini:"allow_listing"`
 	AllowGet     bool   `ini:"allow_get"`
-}
-
-type Static struct {
-	DirlistTempl string `ini:"dirlist_template"`
-	AuthTempl    string `ini:"auth_template"`
-	MimeMap      string `ini:"mime_map"`
+	AllowPost    bool   `ini:"allow_post"`
 }
 
 type Config struct {
@@ -47,29 +42,29 @@ type Config struct {
 	Network  `ini:"network"`
 	Openssl  `ini:"openssl"`
 	Auth     `ini:"auth"`
-	Static   `ini:"static"`
 }
 
 var config *Config
 
-func init() {
-	fn := "config.ini"
+//go:embed config/config.ini
+var defaultConfig []byte
+
+func loadConfig(fn string) error {
 	if _, err := os.Stat(fn); os.IsNotExist(err) {
-		log.Printf("Config file was not found, not using it\n")
-		config = &Config{
-			Internal: Internal{
-				ServerSoftware: "Server Go",
-			},
-			Network: Network{
-				ServerIp:   "0.0.0.0",
-				ServerPort: "8080",
-			},
+		log.Printf("Config file was not specified, using default config\n")
+		config = &Config{}
+		err := ini.MapTo(config, defaultConfig)
+		if err != nil {
+			log.Printf("Default config file parse error: %v\n", err)
+			return err
 		}
 	} else {
 		config = new(Config)
 		err := ini.MapTo(config, fn)
 		if err != nil {
-			printer.Fatal(err, "config file loader")
+			log.Printf("config file load failed: %v\n", err)
+			return err
 		}
 	}
+	return nil
 }

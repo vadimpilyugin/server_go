@@ -26,6 +26,7 @@ type Directory struct {
 	Name     string
 	Elements []Elem
 	Address  string
+	Config   *Config
 }
 
 type Elem struct {
@@ -155,6 +156,7 @@ func toDirectory(dirs []os.FileInfo, name string, cookie string) Directory {
 			config.Internal.Hostname,
 			config.Network.ServerPort,
 		),
+		Config: config,
 	}
 
 	listNo := 0

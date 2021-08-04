@@ -95,6 +95,7 @@
           {{end}}
         </tbody>
       </table>
+      {{ if .Config.AllowPost }}
       <form name="new_file" enctype="multipart/form-data" method="POST" action="./">
         <input type="file" name="file" id="file_upload" class="inputfile inputfile-2" data-multiple-caption="{count} files selected" multiple />
         <label for="file_upload">
@@ -105,6 +106,7 @@
         </label>
         <button style="display: none;" id="upload_button">Upload!</button>
       </form>
+      {{ end }}
       <footer>
         <i>{{.Address}}</i>
       </footer>

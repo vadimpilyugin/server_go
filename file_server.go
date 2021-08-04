@@ -79,7 +79,7 @@ func saveAs(init string, dir string) string {
 // name is '/'-separated, not filepath.Separator.
 func serveFile(w http.ResponseWriter, r *http.Request, fs http.Dir, name string) {
 
-	if r.Method == http.MethodGet && !AllowGet {
+	if r.Method == http.MethodGet && !config.AllowGet {
 		http.Error(w, "400 Bad Request", http.StatusBadRequest)
 		return
 	}
@@ -130,6 +130,11 @@ func serveFile(w http.ResponseWriter, r *http.Request, fs http.Dir, name string)
 
 	if d.IsDir() {
 		if r.Method == "POST" {
+			if !config.AllowPost {
+				printer.Error("no POST allowed")
+				http.Error(w, "no POST allowed", 404)
+				return
+			}
 			postStarted := time.Now()
 			err := r.ParseMultipartForm(10 * mb)
 			if err != nil {
@@ -173,7 +178,7 @@ func serveFile(w http.ResponseWriter, r *http.Request, fs http.Dir, name string)
 			}
 			localRedirect(w, r, "./")
 			return
-		} else if AllowListing {
+		} else if config.AllowListing {
 			buf := new(bytes.Buffer)
 			maxModtime, err := dirList(buf, f, name, cookie)
 			if err != nil {
